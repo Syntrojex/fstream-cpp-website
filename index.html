@@ -67,6 +67,7 @@ body {
   position:absolute; border-radius:50%;
   filter:blur(80px); opacity:0;
   animation: orbFloat 15s ease-in-out infinite;
+  will-change:transform;
 }
 [data-theme="dark"] .orb { opacity:.04; }
 [data-theme="light"] .orb { opacity:.05; }
@@ -78,6 +79,12 @@ body {
   0%,100% { transform:translateY(0) scale(1) rotate(0deg); }
   33%      { transform:translateY(-40px) scale(1.06) rotate(3deg); }
   66%      { transform:translateY(25px) scale(.94) rotate(-2deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb { animation:none; }
+  .reveal, .reveal-left, .reveal-scale { transition:opacity .3s linear; transform:none !important; }
+  * { scroll-behavior:auto !important; }
 }
 
 /* ── TOPBAR ── */
@@ -143,7 +150,7 @@ body {
   border-bottom:1px solid var(--bd2);
 }
 .sr-item:last-child { border-bottom:none; }
-.sr-item:hover { background:var(--sf2); }
+.sr-item:hover, .sr-item.active { background:var(--sf2); }
 .sr-icon { font-size:14px;flex-shrink:0;margin-top:1px; }
 .sr-body { flex:1;min-width:0; }
 .sr-label { font-size:13px;color:var(--tx2); }
@@ -257,23 +264,22 @@ body {
 /* ── SCROLL ANIMATIONS ── */
 .reveal {
   opacity:0;
-  transform:translateY(52px);
-  filter:blur(4px);
-  transition:opacity .65s var(--ease), transform .65s var(--ease), filter .65s var(--ease);
+  transform:translateY(40px);
+  transition:opacity .55s var(--ease), transform .55s var(--ease);
 }
 .reveal.visible {
-  opacity:1;transform:none;filter:none;
+  opacity:1;transform:none;
 }
 .reveal-left {
-  opacity:0;transform:translateX(-52px);filter:blur(4px);
-  transition:opacity .6s var(--ease), transform .6s var(--ease), filter .6s var(--ease);
+  opacity:0;transform:translateX(-40px);
+  transition:opacity .5s var(--ease), transform .5s var(--ease);
 }
-.reveal-left.visible { opacity:1;transform:none;filter:none; }
+.reveal-left.visible { opacity:1;transform:none; }
 .reveal-scale {
-  opacity:0;transform:scale(.82);filter:blur(6px);
-  transition:opacity .5s var(--ease), transform .5s var(--spring), filter .5s var(--ease);
+  opacity:0;transform:scale(.9);
+  transition:opacity .45s var(--ease), transform .45s var(--spring);
 }
-.reveal-scale.visible { opacity:1;transform:none;filter:none; }
+.reveal-scale.visible { opacity:1;transform:none; }
 /* stagger delays */
 .delay-1 { transition-delay:.10s; }
 .delay-2 { transition-delay:.20s; }
@@ -783,6 +789,12 @@ tr:hover td { background:rgba(121,192,255,.05); }
 /* ── RESPONSIVE ── */
 @media (max-width:900px) { .page-wrap { padding:40px 32px 80px; } .search-wrap { max-width:320px; } }
 @media (max-width:700px) {
+  .orb { filter:blur(40px); }
+  .topbar { backdrop-filter:blur(10px) saturate(140%); -webkit-backdrop-filter:blur(10px) saturate(140%); }
+  .footer { backdrop-filter:blur(6px); }
+  .search-input { backdrop-filter:none; }
+  .overlay { backdrop-filter:blur(5px); }
+  .shortcuts-modal { backdrop-filter:blur(4px); }
   .sidebar { position:fixed;top:calc(58px + env(safe-area-inset-top));left:0;bottom:calc(74px + env(safe-area-inset-bottom));z-index:180;width:280px;box-shadow:16px 0 48px rgba(0,0,0,.5);padding-left:env(safe-area-inset-left);transition:transform .32s var(--ease); }
   .sidebar.closed { transform:translateX(-100%);width:280px;opacity:1; }
   .sidebar-backdrop { display:block; }
@@ -828,6 +840,10 @@ tr:hover td { background:rgba(121,192,255,.05); }
   pre { font-size:11.5px;padding:14px 16px; }
   .g3 { grid-template-columns:1fr; }
   .flow-row { gap:4px; }
+}
+/* Phones in landscape (wide but short) can exceed 700px width — catch them by height instead */
+@media (orientation:landscape) and (max-height:500px) {
+  .tb-controls { display:none; }
 }
 </style>
 </head>
@@ -1589,6 +1605,7 @@ const searchIndex = pages.slice(1).map((p, i) => ({
 }));
 
 let searchTimer;
+let activeResultIdx = 0;
 function onSearch(q) {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => _doSearch(q), 60);
@@ -1599,18 +1616,30 @@ function _doSearch(q) {
   const res = document.getElementById('searchResults');
   if (!trim) { res.innerHTML = ''; res.classList.remove('show'); return; }
 
-  const hits = searchIndex.filter(s => {
-    return s.keywords.includes(trim) || s.ch.toLowerCase().includes(trim);
-  }).slice(0, 8);
+  const words = trim.split(/\s+/).filter(Boolean);
+
+  const scored = searchIndex.map(s => {
+    const lbl = s.label.toLowerCase();
+    let score = 0;
+    if (lbl.startsWith(trim)) score += 14;
+    else if (lbl.includes(trim)) score += 8;
+    if (s.keywords.includes(trim)) score += 6;
+    if (s.ch.toLowerCase() === trim || trim === 'ch' + s.ch.toLowerCase()) score += 12;
+    score += words.filter(w => s.keywords.includes(w)).length;
+    return { s, score };
+  }).filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(x => x.s);
+
+  const hits = scored.slice(0, 8);
 
   if (!hits.length) {
     res.innerHTML = `<div class="sr-empty">No results for "<strong>${escHtml(q)}</strong>" — try keywords like <em>seekg</em>, <em>binary</em>, <em>append</em></div>`;
   } else {
-    res.innerHTML = `<div class="sr-header">${hits.length} result${hits.length>1?'s':''} found</div>` + hits.map(h => {
-      const re = new RegExp(`(${escRe(trim)})`, 'gi');
-      const hl = escHtml(h.label).replace(re, '<mark>$1</mark>');
-      const snippet = getSnippet(h.keywords, trim);
-      return `<div class="sr-item" onclick="goTo(${h.idx});hideResults()">
+    res.innerHTML = `<div class="sr-header">${hits.length} result${hits.length>1?'s':''} found</div>` + hits.map((h, i) => {
+      const hl = highlightWords(escHtml(h.label), words);
+      const snippet = getSnippet(h.keywords, words);
+      return `<div class="sr-item${i===0?' active':''}" onclick="goTo(${h.idx});hideResults()">
         <span class="sr-icon">${h.icon}</span>
         <div class="sr-body">
           <div class="sr-label">${hl} <span style="color:var(--dm);font-size:11px;">Ch ${h.ch}</span></div>
@@ -1620,16 +1649,29 @@ function _doSearch(q) {
     }).join('');
   }
   res.classList.add('show');
+  activeResultIdx = 0;
 }
 
-function getSnippet(keywords, q) {
-  const idx = keywords.indexOf(q);
+function highlightWords(text, words) {
+  let out = text;
+  words.forEach(w => {
+    if (!w) return;
+    out = out.replace(new RegExp(`(${escRe(w)})`, 'gi'), '<mark>$1</mark>');
+  });
+  return out;
+}
+
+function getSnippet(keywords, words) {
+  let idx = -1, matchLen = 0;
+  for (const w of words) {
+    const i = keywords.indexOf(w);
+    if (i !== -1) { idx = i; matchLen = w.length; break; }
+  }
   if (idx === -1) return '';
   const start = Math.max(0, idx - 20);
-  const end = Math.min(keywords.length, idx + q.length + 40);
-  let snip = (start > 0 ? '…' : '') + keywords.slice(start, end) + (end < keywords.length ? '…' : '');
-  const re = new RegExp(`(${escRe(q)})`, 'gi');
-  return snip.replace(re, '<mark>$1</mark>');
+  const end = Math.min(keywords.length, idx + matchLen + 40);
+  const snip = (start > 0 ? '…' : '') + keywords.slice(start, end) + (end < keywords.length ? '…' : '');
+  return highlightWords(escHtml(snip), words);
 }
 function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
@@ -1700,7 +1742,21 @@ function closeAbout(e) {
 document.addEventListener('keydown', e => {
   const search = document.getElementById('searchInput');
   if (e.target === search) {
-    if (e.key === 'Escape') { search.blur(); hideResults(); }
+    const resEl = document.getElementById('searchResults');
+    const items = resEl.classList.contains('show') ? Array.from(resEl.querySelectorAll('.sr-item')) : [];
+    if (e.key === 'Escape') { search.blur(); hideResults(); return; }
+    if (items.length && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+      e.preventDefault();
+      activeResultIdx = (activeResultIdx + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+      items.forEach((el, i) => el.classList.toggle('active', i === activeResultIdx));
+      items[activeResultIdx].scrollIntoView({ block: 'nearest' });
+      return;
+    }
+    if (items.length && e.key === 'Enter') {
+      e.preventDefault();
+      (items[activeResultIdx] || items[0]).click();
+      return;
+    }
     return;
   }
   if (document.getElementById('shortcutsModal').classList.contains('show')) {
