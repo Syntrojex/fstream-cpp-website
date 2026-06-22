@@ -783,7 +783,7 @@ tr:hover td { background:rgba(121,192,255,.05); }
 /* ── RESPONSIVE ── */
 @media (max-width:900px) { .page-wrap { padding:40px 32px 80px; } .search-wrap { max-width:320px; } }
 @media (max-width:700px) {
-  .sidebar { position:fixed;top:calc(58px + env(safe-area-inset-top));left:0;bottom:calc(74px + env(safe-area-inset-bottom));z-index:180;width:280px;box-shadow:16px 0 48px rgba(0,0,0,.5);padding-left:env(safe-area-inset-left); }
+  .sidebar { position:fixed;top:calc(58px + env(safe-area-inset-top));left:0;bottom:calc(74px + env(safe-area-inset-bottom));z-index:180;width:280px;box-shadow:16px 0 48px rgba(0,0,0,.5);padding-left:env(safe-area-inset-left);transition:transform .32s var(--ease); }
   .sidebar.closed { transform:translateX(-100%);width:280px;opacity:1; }
   .sidebar-backdrop { display:block; }
   .page-wrap { padding:28px 20px 80px; }
@@ -1679,7 +1679,7 @@ function hideShortcuts(e) {
 function isMobile() { return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent); }
 function openLinkedIn(e) {
   e.preventDefault();
-  const u = 'mustafa-amir-syntrojex';
+  const u = 'mustafa-amir-developer';
   if (isMobile()) {
     const t = Date.now();
     window.location.href = 'linkedin://in/' + u;
