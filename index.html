@@ -716,7 +716,6 @@ tr:hover td { background:rgba(121,192,255,.05); }
 .sl:hover { transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,.25); }
 .sl.li:hover { border-color:#0a66c2;background:rgba(10,102,194,.15); }
 .sl.gh:hover { border-color:#c9d1d9;background:rgba(201,209,217,.1); }
-.sl.pf:hover { border-color:var(--p);background:rgba(210,168,255,.1); }
 .sl svg { width:13px;height:13px; }
 
 /* ── ABOUT POPUP ── */
@@ -784,7 +783,7 @@ tr:hover td { background:rgba(121,192,255,.05); }
 /* ── RESPONSIVE ── */
 @media (max-width:900px) { .page-wrap { padding:40px 32px 80px; } .search-wrap { max-width:320px; } }
 @media (max-width:700px) {
-  .sidebar { position:fixed;top:58px;left:0;bottom:54px;z-index:180;width:280px;box-shadow:16px 0 48px rgba(0,0,0,.5); }
+  .sidebar { position:fixed;top:58px;left:0;bottom:74px;z-index:180;width:280px;box-shadow:16px 0 48px rgba(0,0,0,.5); }
   .sidebar.closed { transform:translateX(-100%);width:280px;opacity:1; }
   .page-wrap { padding:28px 20px 80px; }
   .g2,.compare-wrap { grid-template-columns:1fr; }
@@ -795,8 +794,8 @@ tr:hover td { background:rgba(121,192,255,.05); }
   .home-btn { padding:0 10px; }
   .font-ctrl { display:none; }
   .pg-nav-btn { padding:8px 12px;font-size:10px; }
-  .footer { padding:10px 16px;gap:8px; }
-  .ft-copy { font-size:9px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .footer { padding:10px 16px;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center; }
+  .ft-copy { font-size:9px;flex:0 0 100%;text-align:center;white-space:normal;overflow:visible;text-overflow:initial; }
   .ft-spacer { display:none; }
   .ft-about { flex-shrink:0; }
   .social-row { flex-shrink:0; }
@@ -869,9 +868,6 @@ tr:hover td { background:rgba(121,192,255,.05); }
     </a>
     <a class="sl gh" href="https://github.com/Syntrojex" target="_blank" rel="noopener" title="GitHub">
       <svg viewBox="0 0 24 24" fill="none"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" stroke="#c9d1d9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </a>
-    <a class="sl pf" href="https://mustafa-amir.vercel.app" target="_blank" rel="noopener" title="Portfolio">
-      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#d2a8ff" stroke-width="1.8"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" stroke="#d2a8ff" stroke-width="1.8" stroke-linecap="round"/></svg>
     </a>
   </div>
 </footer>
