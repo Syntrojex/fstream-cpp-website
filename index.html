@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fstream</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ease: cubic-bezier(.4,0,.2,1);
+  --spring: cubic-bezier(.34,1.56,.64,1);
+  --r: #f78166; --r2: #ff9d87;
+  --b: #79c0ff; --g: #56d364;
+  --y: #e3b341; --p: #d2a8ff;
+}
+[data-theme="dark"] {
+  --bg: #090d13; --bg2: #0d1117; --bg3: #161b22;
+  --sf: #161b22; --sf2: #1c2128; --sf3: #21262d;
+  --bd: #30363d; --bd2: #21262d;
+  --tx: #e6edf3; --tx2: #c9d1d9; --mu: #8b949e; --dm: #6e7681;
+  --glow: rgba(247,129,102,.15);
+  --glass: rgba(22,27,34,.8);
+  --kw: #ff7b72; --ty: #ffa657; --st: #a5d6ff;
+  --cm: #8b949e; --fn: #d2a8ff; --nu: #79c0ff; --mc: #79c0ff;
+  --sb-bg: #0d1117; --topbar-bg: rgba(13,17,23,.95);
+  --footer-bg: #0d1117;
+  --search-bg: rgba(22,27,34,.95);
+  --card-bg: #161b22;
+  --shadow: 0 8px 32px rgba(0,0,0,.5);
+  --vis-bg: rgba(22,27,34,.6);
+}
+[data-theme="light"] {
+  --bg: #f0f2f5; --bg2: #ffffff; --bg3: #f6f8fa;
+  --sf: #ffffff; --sf2: #f6f8fa; --sf3: #eaeef2;
+  --bd: #d0d7de; --bd2: #eaeef2;
+  --tx: #1f2328; --tx2: #24292f; --mu: #57606a; --dm: #6e7781;
+  --glow: rgba(247,129,102,.08);
+  --glass: rgba(255,255,255,.85);
+  --kw: #cf222e; --ty: #953800; --st: #0550ae;
+  --cm: #57606a; --fn: #8250df; --nu: #0550ae; --mc: #0550ae;
+  --sb-bg: #f6f8fa; --topbar-bg: rgba(246,248,250,.98);
+  --footer-bg: #f6f8fa;
+  --search-bg: rgba(255,255,255,.98);
+  --card-bg: #ffffff;
+  --shadow: 0 4px 20px rgba(0,0,0,.08);
+  --vis-bg: rgba(246,248,250,.8);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+html, body { height:100%; overflow:hidden; }
+body {
+  background: var(--bg);
+  color: var(--tx);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  transition: background .35s var(--ease), color .35s var(--ease);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── ANIMATED BG ORBS ── */
+.bg-orbs { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+.orb {
+  position:absolute; border-radius:50%;
+  filter:blur(80px); opacity:0;
+  animation: orbFloat 15s ease-in-out infinite;
+}
+[data-theme="dark"] .orb { opacity:.04; }
+[data-theme="light"] .orb { opacity:.05; }
+.orb1 { width:600px;height:600px;background:var(--r);top:-150px;left:-150px;animation-delay:0s; }
+.orb2 { width:500px;height:500px;background:var(--b);top:25%;right:-100px;animation-delay:-5s; }
+.orb3 { width:400px;height:400px;background:var(--p);bottom:-100px;left:25%;animation-delay:-10s; }
+.orb4 { width:350px;height:350px;background:var(--g);top:60%;left:50%;animation-delay:-7s; }
+@keyframes orbFloat {
+  0%,100% { transform:translateY(0) scale(1) rotate(0deg); }
+  33%      { transform:translateY(-40px) scale(1.06) rotate(3deg); }
+  66%      { transform:translateY(25px) scale(.94) rotate(-2deg); }
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height:58px;
+  background: var(--topbar-bg);
+  border-bottom:1px solid var(--bd);
+  backdrop-filter:blur(24px) saturate(200%);
+  -webkit-backdrop-filter:blur(24px) saturate(200%);
+  display:flex; align-items:center;
+  padding:0 16px; gap:12px;
+  flex-shrink:0; z-index:200;
+  position:relative;
+  transition: background .35s;
+}
+.tb-logo {
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px; font-weight:700;
+  color:var(--r); letter-spacing:1px;
+  white-space:nowrap;
+  display:flex; align-items:center; gap:6px;
+  flex-shrink:0;
+}
+.tb-logo-bracket { color:var(--mu); font-size:18px; }
+
+/* Search */
+.search-wrap { flex:1; max-width:520px; margin:0 auto; position:relative; }
+.search-input {
+  width:100%;
+  background:var(--search-bg);
+  border:1px solid var(--bd);
+  border-radius:24px;
+  padding:8px 48px 8px 40px;
+  font-family:'Inter',sans-serif;
+  font-size:13px; color:var(--tx);
+  outline:none;
+  transition:all .25s var(--ease);
+  backdrop-filter:blur(10px);
+}
+.search-input::placeholder { color:var(--dm); }
+.search-input:focus {
+  border-color:var(--r);
+  box-shadow:0 0 0 3px var(--glow), 0 4px 20px rgba(0,0,0,.2);
+  background:var(--sf);
+}
+.search-icon { position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--mu);font-size:14px;pointer-events:none; }
+.search-kbd {
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--dm);
+  background:var(--sf2);border:1px solid var(--bd);border-radius:4px;
+  padding:2px 6px;letter-spacing:.5px;pointer-events:none;
+  transition:opacity .2s;
+}
+.search-input:focus + .search-kbd,
+.search-input:not(:placeholder-shown) + .search-kbd { opacity:0; }
+
+.search-results {
+  position:absolute;top:calc(100% + 8px);left:0;right:0;
+  background:var(--sf);border:1px solid var(--bd);
+  border-radius:14px;box-shadow:var(--shadow),0 0 0 1px rgba(247,129,102,.06);
+  z-index:300;overflow:hidden;
+  display:none;
+  animation:dropIn .2s var(--ease);
+}
+.search-results.show { display:block; }
+@keyframes dropIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:none} }
+.sr-header { padding:8px 14px 4px; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--dm); }
+.sr-item {
+  display:flex; align-items:flex-start; gap:10px;
+  padding:10px 16px; cursor:pointer;
+  transition:background .15s;
+  border-bottom:1px solid var(--bd2);
+}
+.sr-item:last-child { border-bottom:none; }
+.sr-item:hover { background:var(--sf2); }
+.sr-icon { font-size:14px;flex-shrink:0;margin-top:1px; }
+.sr-body { flex:1;min-width:0; }
+.sr-label { font-size:13px;color:var(--tx2); }
+.sr-label mark { background:none;color:var(--r);font-weight:700; }
+.sr-snippet { font-size:11px;color:var(--dm);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:360px; }
+.sr-snippet mark { background:none;color:var(--r);font-weight:600; }
+.sr-badge { font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--mu);flex-shrink:0;margin-top:2px; }
+.sr-empty { padding:24px;text-align:center;color:var(--mu);font-size:13px; }
+
+/* Right controls */
+.tb-controls { display:flex;align-items:center;gap:6px;flex-shrink:0; }
+.tb-btn {
+  width:36px;height:36px;
+  border-radius:10px;border:1px solid var(--bd);
+  background:transparent;color:var(--mu);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s var(--ease);font-size:15px;flex-shrink:0;
+}
+.tb-btn:hover { background:var(--sf2);color:var(--tx);border-color:var(--r);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.15); }
+.tb-btn.active { background:rgba(247,129,102,.12);color:var(--r);border-color:rgba(247,129,102,.4); }
+.tb-btn title-attr { display:none; }
+
+
+.home-btn {
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:.5px;
+  color:var(--mu);background:transparent;
+  border:1px solid var(--bd);border-radius:8px;
+  padding:0 12px;height:36px;cursor:pointer;
+  transition:all .2s var(--ease);white-space:nowrap;
+  display:flex;align-items:center;gap:6px;
+}
+.home-btn:hover { color:var(--tx);border-color:var(--r);background:rgba(247,129,102,.06);transform:translateY(-1px); }
+
+
+/* ── LAYOUT ── */
+.workspace { flex:1;display:flex;overflow:hidden;position:relative;z-index:1; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width:272px;background:var(--sb-bg);border-right:1px solid var(--bd);
+  display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
+  transition:width .32s var(--ease), opacity .28s var(--ease);
+}
+.sidebar.closed { width:0;opacity:0;pointer-events:none; }
+
+.sb-top { padding:18px 16px 12px;border-bottom:1px solid var(--bd2);flex-shrink:0; }
+.sb-title { font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--r);margin-bottom:4px; }
+.sb-sub { font-size:11.5px;color:var(--dm); }
+
+
+.sb-scroll { flex:1;overflow-y:auto;padding:4px 0 16px; }
+.sb-scroll::-webkit-scrollbar { width:3px; }
+.sb-scroll::-webkit-scrollbar-thumb { background:var(--bd);border-radius:2px; }
+
+.nb-sec { padding:12px 16px 5px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dm); }
+
+.nb-item {
+  display:flex;align-items:center;gap:10px;
+  padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mu);
+  transition:all .18s var(--ease);
+  border-left:2px solid transparent;user-select:none;
+  position:relative;overflow:hidden;
+}
+.nb-item::before {
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,var(--sf2));
+  opacity:0;transition:opacity .2s;
+}
+.nb-item:hover::before { opacity:1; }
+.nb-item:hover { color:var(--tx); }
+.nb-item.active { color:var(--b);border-left-color:var(--b);background:rgba(121,192,255,.08); }
+.nb-item.active::before { opacity:0; }
+.nb-num { font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dm);width:22px;flex-shrink:0; }
+.nb-item.active .nb-num { color:var(--r); }
+.nb-icon { font-size:13px;flex-shrink:0; }
+.nb-label { flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+
+/* ── CONTENT ── */
+.content {
+  flex:1;overflow-y:auto;background:var(--bg2);
+  transition:background .35s var(--ease);
+}
+.content::-webkit-scrollbar { width:6px; }
+.content::-webkit-scrollbar-thumb { background:var(--bd);border-radius:3px; }
+.content::-webkit-scrollbar-track { background:transparent; }
+
+.page-wrap {
+  max-width:820px;margin:0 auto;
+  padding:52px 48px 100px;
+}
+
+/* Reading time badge */
+.reading-time {
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  color:var(--dm);background:var(--sf2);
+  border:1px solid var(--bd);border-radius:10px;
+  padding:3px 10px;margin-bottom:16px;
+}
+
+/* ── SCROLL ANIMATIONS ── */
+.reveal {
+  opacity:0;
+  transform:translateY(52px);
+  filter:blur(4px);
+  transition:opacity .65s var(--ease), transform .65s var(--ease), filter .65s var(--ease);
+}
+.reveal.visible {
+  opacity:1;transform:none;filter:none;
+}
+.reveal-left {
+  opacity:0;transform:translateX(-52px);filter:blur(4px);
+  transition:opacity .6s var(--ease), transform .6s var(--ease), filter .6s var(--ease);
+}
+.reveal-left.visible { opacity:1;transform:none;filter:none; }
+.reveal-scale {
+  opacity:0;transform:scale(.82);filter:blur(6px);
+  transition:opacity .5s var(--ease), transform .5s var(--spring), filter .5s var(--ease);
+}
+.reveal-scale.visible { opacity:1;transform:none;filter:none; }
+/* stagger delays */
+.delay-1 { transition-delay:.10s; }
+.delay-2 { transition-delay:.20s; }
+.delay-3 { transition-delay:.30s; }
+.delay-4 { transition-delay:.40s; }
+.delay-5 { transition-delay:.50s; }
+
+/* Extra: concept panel entrance glow flash */
+.concept-panel.reveal.visible {
+  animation: panelGlow .7s var(--ease) both;
+}
+@keyframes panelGlow {
+  0%   { box-shadow:0 0 0 0 rgba(121,192,255,0); }
+  40%  { box-shadow:0 0 32px 6px rgba(121,192,255,.22); }
+  100% { box-shadow:none; }
+}
+/* Diagram entrance: slide from bottom + scale */
+.diagram.reveal.visible {
+  animation: diagIn .55s var(--spring) both;
+}
+@keyframes diagIn {
+  from { transform:translateY(30px) scale(.96);opacity:0; }
+  to   { transform:none;opacity:1; }
+}
+/* Step items stagger on parent reveal */
+.reveal.visible .step-item:nth-child(1) { animation:stepIn .4s .05s var(--spring) both; }
+.reveal.visible .step-item:nth-child(2) { animation:stepIn .4s .15s var(--spring) both; }
+.reveal.visible .step-item:nth-child(3) { animation:stepIn .4s .25s var(--spring) both; }
+.reveal.visible .step-item:nth-child(4) { animation:stepIn .4s .35s var(--spring) both; }
+.reveal.visible .step-item:nth-child(5) { animation:stepIn .4s .45s var(--spring) both; }
+@keyframes stepIn {
+  from { opacity:0;transform:translateX(-28px) scale(.96); }
+  to   { opacity:1;transform:none; }
+}
+/* Code block entrance */
+.cb.reveal.visible {
+  animation:cbIn .5s var(--spring) both;
+}
+@keyframes cbIn {
+  from { opacity:0;transform:translateY(32px) scale(.97); }
+  to   { opacity:1;transform:none; }
+}
+/* Box entrance */
+.box.reveal.visible {
+  animation:boxIn .45s var(--spring) both;
+}
+@keyframes boxIn {
+  from { opacity:0;transform:translateX(-24px); }
+  to   { opacity:1;transform:none; }
+}
+/* Card grid entrance */
+.gc.reveal.visible {
+  animation:gcIn .5s var(--spring) both;
+}
+@keyframes gcIn {
+  from { opacity:0;transform:translateY(28px) scale(.93); }
+  to   { opacity:1;transform:none; }
+}
+
+/* page entrance */
+@keyframes pageIn {
+  from { opacity:0;transform:translateY(20px); }
+  to   { opacity:1;transform:none; }
+}
+.page-enter { animation:pageIn .4s var(--ease) both; }
+
+/* ── TYPOGRAPHY ── */
+.pg-badge {
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  letter-spacing:3px;text-transform:uppercase;color:var(--r);
+  display:inline-flex;align-items:center;gap:8px;margin-bottom:12px;
+}
+.pg-badge::before { content:'';width:20px;height:2px;background:var(--r);border-radius:1px; }
+
+.pg-title {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(26px,4vw,48px);font-weight:700;line-height:1.08;
+  margin-bottom:16px;
+  background:linear-gradient(135deg,var(--tx) 0%,var(--tx2) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+[data-theme="light"] .pg-title {
+  background:linear-gradient(135deg,#1f2328 0%,#57606a 100%);
+  -webkit-background-clip:text;background-clip:text;
+}
+
+.pg-lead {
+  font-size:16px;color:var(--mu);
+  border-left:3px solid var(--r);padding-left:18px;
+  margin-bottom:32px;font-style:italic;font-weight:300;
+}
+
+h3.sh {
+  font-family:'Playfair Display',serif;font-size:20px;color:var(--b);
+  margin:36px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;gap:10px;
+}
+h3.sh::before { content:'';width:14px;height:2px;background:var(--b);flex-shrink:0; }
+
+p { margin-bottom:14px;color:var(--mu);font-size:14.5px;line-height:1.85; }
+p strong { color:var(--tx2); }
+
+code {
+  font-family:'JetBrains Mono',monospace;font-size:12.5px;
+  background:var(--sf2);border:1px solid var(--bd);padding:2px 7px;
+  border-radius:4px;color:var(--y);
+  transition:background .3s,border-color .3s;
+}
+
+/* ── VISUAL CONCEPT CARDS (ChatGPT style) ── */
+.concept-panel {
+  background:linear-gradient(135deg,rgba(121,192,255,.04),rgba(210,168,255,.04));
+  border:1px solid rgba(121,192,255,.15);
+  border-radius:14px;padding:20px 24px;margin:20px 0;
+  position:relative;overflow:hidden;
+}
+.concept-panel::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--b),var(--p));
+}
+.concept-label {
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--b);margin-bottom:12px;
+  display:flex;align-items:center;gap:6px;
+}
+.concept-label::before { content:'💡'; }
+
+.step-list { list-style:none;display:flex;flex-direction:column;gap:8px;margin:12px 0; }
+.step-item {
+  display:flex;align-items:flex-start;gap:12px;
+  padding:10px 14px;background:var(--sf2);border-radius:8px;
+  border:1px solid var(--bd2);
+  transition:all .2s var(--ease);
+}
+.step-item:hover { border-color:var(--b);transform:translateX(4px); }
+.step-num {
+  width:22px;height:22px;border-radius:50%;
+  background:linear-gradient(135deg,var(--r),var(--p));
+  color:#fff;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;
+}
+.step-text { font-size:13.5px;color:var(--tx2);line-height:1.6; }
+.step-text strong { color:var(--r); }
+
+/* ── VISUAL DIAGRAMS ── */
+.diagram {
+  background:var(--vis-bg);border:1px solid var(--bd);
+  border-radius:12px;padding:24px;margin:20px 0;
+  overflow-x:auto;
+}
+.diagram-title {
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--dm);margin-bottom:16px;
+  display:flex;align-items:center;gap:6px;
+}
+.diagram-title::before { content:'📊'; }
+
+/* Stream flow diagram */
+.flow-row {
+  display:flex;align-items:center;justify-content:center;
+  gap:0;flex-wrap:wrap;margin:8px 0;
+}
+.flow-box {
+  border-radius:10px;padding:10px 16px;
+  font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;
+  text-align:center;white-space:nowrap;
+}
+.flow-box.prog { background:rgba(121,192,255,.12);border:1px solid rgba(121,192,255,.3);color:var(--b); }
+.flow-box.file { background:rgba(247,129,102,.12);border:1px solid rgba(247,129,102,.3);color:var(--r); }
+.flow-box.mem  { background:rgba(86,211,100,.1);border:1px solid rgba(86,211,100,.25);color:var(--g); }
+.flow-arrow {
+  display:flex;align-items:center;flex-direction:column;
+  padding:0 10px;font-family:'JetBrains Mono',monospace;font-size:10px;
+  color:var(--dm);gap:2px;
+}
+.flow-arrow .arrow-line {
+  font-size:20px;color:var(--mu);line-height:1;
+}
+.flow-arrow .arrow-label { font-size:9px;letter-spacing:.5px; }
+
+/* Memory layout diagram */
+.mem-layout {
+  display:flex;gap:2px;align-items:flex-end;margin:12px 0;font-family:'JetBrains Mono',monospace;
+}
+.mem-cell {
+  border:1px solid var(--bd);border-radius:4px;padding:8px 6px;
+  text-align:center;font-size:10px;min-width:40px;
+  background:var(--sf2);
+}
+.mem-cell .mc-val { font-size:13px;font-weight:700;color:var(--b);display:block; }
+.mem-cell .mc-addr { font-size:9px;color:var(--dm);display:block;margin-top:2px; }
+.mem-cell.highlight { background:rgba(121,192,255,.12);border-color:rgba(121,192,255,.4); }
+
+/* Comparison visual */
+.compare-wrap { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0; }
+.compare-col { border-radius:10px;padding:14px 16px;border:1px solid var(--bd); }
+.compare-col.col-a { background:rgba(247,129,102,.06);border-color:rgba(247,129,102,.2); }
+.compare-col.col-b { background:rgba(86,211,100,.06);border-color:rgba(86,211,100,.2); }
+.compare-header { font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px; }
+.compare-col.col-a .compare-header { color:var(--r); }
+.compare-col.col-b .compare-header { color:var(--g); }
+.compare-row { display:flex;align-items:flex-start;gap:6px;margin:4px 0;font-size:12.5px;color:var(--mu); }
+.compare-row::before { content:'•';color:var(--mu);flex-shrink:0;margin-top:1px; }
+
+/* ── CODE BLOCKS ── */
+.cb {
+  background:var(--sf);border:1px solid var(--bd);
+  border-radius:12px;margin:22px 0;overflow:hidden;
+  box-shadow:var(--shadow);
+  transition:box-shadow .3s var(--ease), transform .2s var(--ease), border-color .25s;
+}
+.cb:hover { box-shadow:0 12px 40px rgba(0,0,0,.3),0 0 0 1px rgba(247,129,102,.12);border-color:rgba(247,129,102,.2); }
+.cb-h {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;background:var(--sf2);border-bottom:1px solid var(--bd);
+}
+.cb-l {
+  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mu);
+  text-transform:uppercase;letter-spacing:1px;
+  display:flex;align-items:center;gap:10px;
+}
+.cb-dots {
+  display:flex;gap:5px;
+}
+.cb-dot {
+  width:10px;height:10px;border-radius:50%;
+}
+.cb-dot.red { background:#ff5f57; }
+.cb-dot.yellow { background:#ffbd2e; }
+.cb-dot.green { background:#28c840; }
+.cb-actions { display:flex;gap:6px;align-items:center; }
+.cb-copy, .cb-dl {
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--mu);
+  background:var(--sf3);border:1px solid var(--bd);padding:3px 10px;
+  border-radius:5px;cursor:pointer;
+  transition:all .15s var(--ease);letter-spacing:.5px;
+}
+.cb-copy:hover { color:var(--g);border-color:var(--g);background:rgba(86,211,100,.08); }
+.cb-dl:hover   { color:var(--b);border-color:var(--b);background:rgba(121,192,255,.08); }
+.cb-copy.copied { color:var(--g);border-color:var(--g);background:rgba(86,211,100,.12); }
+
+/* Line numbers */
+.cb-body { display:flex; }
+.line-nums {
+  padding:20px 0 20px 16px;
+  font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.75;
+  color:var(--dm);user-select:none;text-align:right;
+  border-right:1px solid var(--bd2);
+  min-width:44px;
+  display:flex;flex-direction:column;
+}
+.line-nums span { display:block;padding-right:12px;font-size:11px; }
+
+pre {
+  font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.75;
+  padding:20px 22px;overflow-x:auto;tab-size:4;color:var(--tx);flex:1;
+}
+pre::-webkit-scrollbar { height:4px; }
+pre::-webkit-scrollbar-thumb { background:var(--bd);border-radius:2px; }
+
+/* Syntax */
+.kw  { color:var(--kw);font-weight:600; }
+.ty  { color:var(--ty); }
+.st  { color:var(--st); }
+.cm  { color:var(--cm);font-style:italic; }
+.fn  { color:var(--fn); }
+.nu  { color:var(--nu); }
+.mc  { color:var(--mc); }
+.op  { color:var(--b); }
+.va  { color:var(--tx); }
+.pu  { color:var(--mu); }
+
+/* ── INFO BOXES ── */
+.box {
+  border-radius:10px;padding:14px 20px;margin:18px 0;border-left:4px solid;
+  backdrop-filter:blur(4px);
+  transition:transform .2s var(--ease), box-shadow .2s;
+}
+.box:hover { transform:translateX(5px);box-shadow:4px 0 20px rgba(0,0,0,.1); }
+.box .bt { font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:6px; }
+.box p { margin:0;font-size:13.5px; }
+.info { background:rgba(121,192,255,.06);border-color:var(--b); }
+.info .bt { color:var(--b); }
+.tip  { background:rgba(86,211,100,.06);border-color:var(--g); }
+.tip  .bt { color:var(--g); }
+.warn { background:rgba(227,179,65,.06);border-color:var(--y); }
+.warn .bt { color:var(--y); }
+.dng  { background:rgba(247,129,102,.06);border-color:var(--r); }
+.dng  .bt { color:var(--r); }
+
+/* ── TABLES ── */
+.tw { overflow-x:auto;margin:18px 0;border-radius:12px;box-shadow:var(--shadow); }
+table { width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:12px;overflow:hidden; }
+th { background:var(--sf2);color:var(--b);padding:11px 14px;text-align:left;border-bottom:1px solid var(--bd);font-weight:600;letter-spacing:.3px; }
+td { padding:10px 14px;border-bottom:1px solid var(--bd2);color:var(--mu);vertical-align:top;transition:background .15s; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(121,192,255,.05); }
+.tg { color:var(--g); } .tb { color:var(--b); } .to { color:var(--y); } .tr { color:var(--r); }
+
+/* ── OUTPUT BOX ── */
+.out-label { font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dm);margin-bottom:6px;font-family:'JetBrains Mono',monospace; }
+.out-box {
+  background:#04080f;border:1px solid rgba(86,211,100,.2);border-radius:8px;
+  padding:14px 18px;font-family:'JetBrains Mono',monospace;font-size:12.5px;
+  color:var(--g);line-height:1.7;margin-bottom:18px;white-space:pre;overflow-x:auto;
+  box-shadow:0 0 20px rgba(86,211,100,.05),inset 0 0 40px rgba(86,211,100,.02);
+  animation:termBlink .05s ease;
+}
+@keyframes termBlink { from{opacity:.85} to{opacity:1} }
+[data-theme="light"] .out-box { background:#f0fff4;border-color:rgba(86,211,100,.3); }
+
+/* ── ANALOGY ── */
+.analogy {
+  background:linear-gradient(135deg,rgba(210,168,255,.07),rgba(121,192,255,.04));
+  border:1px solid rgba(210,168,255,.2);border-radius:12px;padding:18px 22px;margin:20px 0;
+  position:relative;overflow:hidden;
+}
+.analogy::after { content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,rgba(210,168,255,.04),transparent 70%);pointer-events:none; }
+.analogy-t { font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--p);margin-bottom:8px; }
+.analogy p { margin:0;font-size:14px;font-style:italic;color:var(--mu); }
+
+/* ── GRID CARDS ── */
+.g2 { display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0; }
+.g3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:16px 0; }
+.gc {
+  background:var(--card-bg);border:1px solid var(--bd);
+  border-radius:12px;padding:16px 18px;
+  transition:all .25s var(--ease);cursor:default;
+}
+.gc:hover { border-color:rgba(247,129,102,.4);transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.2); }
+.gc-t { font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--r);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px; }
+.gc-icon { font-size:22px;margin-bottom:10px; }
+.gc p { margin:0;font-size:13px; }
+
+/* Mode badge grid */
+.mode-grid { display:flex;flex-wrap:wrap;gap:8px;margin:14px 0; }
+.mode-tag {
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 12px;border-radius:8px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;
+  border:1px solid;
+  transition:transform .15s var(--spring);cursor:default;
+}
+.mode-tag:hover { transform:scale(1.05); }
+.mode-tag.in  { background:rgba(86,211,100,.1);border-color:rgba(86,211,100,.3);color:var(--g); }
+.mode-tag.out { background:rgba(121,192,255,.1);border-color:rgba(121,192,255,.3);color:var(--b); }
+.mode-tag.app { background:rgba(227,179,65,.1);border-color:rgba(227,179,65,.3);color:var(--y); }
+.mode-tag.bin { background:rgba(210,168,255,.1);border-color:rgba(210,168,255,.3);color:var(--p); }
+.mode-tag.trn { background:rgba(247,129,102,.1);border-color:rgba(247,129,102,.3);color:var(--r); }
+
+/* ── WELCOME PAGE ── */
+.welcome { text-align:center;padding:50px 24px 32px; }
+.wl-badge {
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;
+  text-transform:uppercase;color:var(--r);
+  border:1px solid rgba(247,129,102,.3);padding:7px 20px;border-radius:20px;
+  display:inline-block;margin-bottom:24px;background:rgba(247,129,102,.05);
+  animation:badgePulse 3.5s ease-in-out infinite;
+}
+@keyframes badgePulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(247,129,102,.3); }
+  50%      { box-shadow:0 0 0 10px rgba(247,129,102,.0); }
+}
+.wl-h1 {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(38px,6vw,70px);font-weight:900;line-height:1.0;margin-bottom:14px;
+}
+.wl-h1 .acc {
+  background:linear-gradient(135deg,var(--r),var(--p));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.wl-h1 .main {
+  background:linear-gradient(135deg,var(--tx) 0%,var(--tx2) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+[data-theme="light"] .wl-h1 .main {
+  background:linear-gradient(135deg,#1f2328 0%,#57606a 100%);
+  -webkit-background-clip:text;background-clip:text;
+}
+.wl-sub { color:var(--mu);font-size:15px;margin-bottom:36px;max-width:500px;margin-left:auto;margin-right:auto; }
+.wl-stats { display:flex;gap:28px;justify-content:center;margin-bottom:36px;flex-wrap:wrap; }
+.wl-stat { text-align:center; }
+.wl-stat-num { font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--r); }
+.wl-stat-lbl { font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dm);margin-top:2px; }
+.wl-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;text-align:left;max-width:720px;margin:0 auto; }
+.wl-card {
+  background:var(--card-bg);border:1px solid var(--bd);border-radius:14px;padding:20px;
+  cursor:pointer;transition:all .28s var(--ease);position:relative;overflow:hidden;
+}
+.wl-card::before {
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(247,129,102,.07),transparent);
+  opacity:0;transition:opacity .25s;
+}
+.wl-card:hover { border-color:rgba(247,129,102,.4);transform:translateY(-5px);box-shadow:0 16px 40px rgba(0,0,0,.25); }
+.wl-card:hover::before { opacity:1; }
+.wl-icon { font-size:26px;margin-bottom:12px; }
+.wl-ct { font-size:14px;font-weight:600;color:var(--tx2);margin-bottom:5px; }
+.wl-cd { font-size:12px;color:var(--mu);line-height:1.5; }
+
+/* ── PAGE NAV ── */
+.pg-nav {
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:60px;padding-top:28px;border-top:1px solid var(--bd);
+}
+.pg-nav-btn {
+  display:flex;align-items:center;gap:8px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mu);
+  background:var(--sf);border:1px solid var(--bd);padding:10px 18px;
+  border-radius:10px;cursor:pointer;transition:all .2s var(--ease);
+  letter-spacing:.5px;max-width:45%;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.pg-nav-btn:hover { color:var(--tx);border-color:var(--r);background:rgba(247,129,102,.06);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.15); }
+.pg-nav-btn:disabled { opacity:.2;cursor:not-allowed;pointer-events:none; }
+.pg-nav-info { font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dm);text-align:center; }
+
+/* ── FOOTER ── */
+.footer {
+  background:var(--footer-bg);border-top:1px solid var(--bd);
+  padding:12px 24px;flex-shrink:0;
+  display:flex;align-items:center;gap:16px;
+  z-index:100;position:relative;backdrop-filter:blur(12px);
+}
+.ft-copy { font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dm);letter-spacing:.5px;white-space:nowrap; }
+.ft-copy strong { color:var(--y); }
+.ft-spacer { flex:1; }
+.ft-about {
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--mu);cursor:pointer;
+  background:none;border:1px solid var(--bd);border-radius:6px;padding:4px 10px;
+  letter-spacing:.5px;transition:all .2s var(--ease);white-space:nowrap;
+}
+.ft-about:hover { color:var(--r);border-color:var(--r);background:rgba(247,129,102,.06); }
+.social-row { display:flex;gap:8px;align-items:center; }
+.sl {
+  width:28px;height:28px;border-radius:8px;border:1px solid var(--bd);background:var(--sf2);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:all .22s var(--spring);text-decoration:none;flex-shrink:0;
+}
+.sl:hover { transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,.25); }
+.sl.li:hover { border-color:#0a66c2;background:rgba(10,102,194,.15); }
+.sl.gh:hover { border-color:#c9d1d9;background:rgba(201,209,217,.1); }
+.sl.pf:hover { border-color:var(--p);background:rgba(210,168,255,.1); }
+.sl svg { width:13px;height:13px; }
+
+/* ── ABOUT POPUP ── */
+.overlay {
+  position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(10px);
+  z-index:500;display:none;align-items:center;justify-content:center;padding:20px;
+}
+.overlay.show { display:flex;animation:overlayIn .25s var(--ease); }
+@keyframes overlayIn { from{opacity:0} to{opacity:1} }
+.about-card {
+  background:var(--sf);border:1px solid var(--bd);border-radius:20px;
+  width:100%;max-width:460px;overflow:hidden;
+  box-shadow:0 40px 100px rgba(0,0,0,.6);
+  animation:cardIn .3s var(--spring);
+}
+@keyframes cardIn { from{transform:scale(.88) translateY(24px);opacity:0} to{transform:none;opacity:1} }
+.about-head {
+  background:linear-gradient(135deg,rgba(247,129,102,.1),rgba(121,192,255,.05));
+  padding:24px 24px 20px;border-bottom:1px solid var(--bd);
+  display:flex;align-items:flex-start;justify-content:space-between;
+}
+.about-icon { font-size:36px;margin-bottom:8px; }
+.about-ht { font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--tx); }
+.about-hs { font-size:12px;color:var(--mu);margin-top:2px; }
+.about-x { background:none;border:none;color:var(--mu);cursor:pointer;font-size:20px;padding:0;transition:color .15s;line-height:1; }
+.about-x:hover { color:var(--r); }
+.about-body { padding:22px 24px; }
+.about-body p { font-size:13.5px;color:var(--mu);margin-bottom:12px; }
+.about-chip {
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(121,192,255,.08);border:1px solid rgba(121,192,255,.2);
+  border-radius:20px;padding:5px 12px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--b);
+  margin:4px 4px 4px 0;transition:transform .15s var(--spring);
+}
+.about-chip:hover { transform:scale(1.05); }
+.about-footer { border-top:1px solid var(--bd);padding:16px 24px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dm); }
+.about-footer strong { color:var(--y); }
+
+/* ── SHORTCUTS MODAL ── */
+.shortcuts-modal {
+  position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);
+  z-index:490;display:none;align-items:center;justify-content:center;padding:20px;
+}
+.shortcuts-modal.show { display:flex;animation:overlayIn .2s var(--ease); }
+.shortcuts-card {
+  background:var(--sf);border:1px solid var(--bd);border-radius:18px;
+  width:100%;max-width:380px;overflow:hidden;box-shadow:var(--shadow);
+  animation:cardIn .25s var(--spring);
+}
+.shortcuts-head { padding:18px 24px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between; }
+.shortcuts-head h3 { font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--tx);letter-spacing:.5px; }
+.sc-close { width:28px;height:28px;border-radius:8px;border:1px solid var(--bd);background:var(--sf2);color:var(--mu);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0; }
+.sc-close:hover { color:var(--r);border-color:var(--r);background:rgba(247,129,102,.08);transform:scale(1.05); }
+.shortcuts-body { padding:14px 24px 20px;display:flex;flex-direction:column;gap:8px; }
+.sc-row { display:flex;align-items:center;justify-content:space-between;padding:6px 0; }
+.sc-desc { font-size:13px;color:var(--mu); }
+.sc-keys { display:flex;gap:4px;align-items:center; }
+.sc-key {
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  background:var(--sf2);border:1px solid var(--bd);border-bottom-width:2px;
+  border-radius:5px;padding:2px 7px;color:var(--tx2);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width:900px) { .page-wrap { padding:40px 32px 80px; } .search-wrap { max-width:320px; } }
+@media (max-width:700px) {
+  .sidebar { position:fixed;top:58px;left:0;bottom:54px;z-index:180;width:280px;box-shadow:16px 0 48px rgba(0,0,0,.5); }
+  .sidebar.closed { transform:translateX(-100%);width:280px;opacity:1; }
+  .page-wrap { padding:28px 20px 80px; }
+  .g2,.compare-wrap { grid-template-columns:1fr; }
+  .g3 { grid-template-columns:1fr 1fr; }
+  .search-wrap { max-width:none;flex:1; }
+  .tb-logo { display:none; }
+  .home-btn span { display:none; }
+  .home-btn { padding:0 10px; }
+  .font-ctrl { display:none; }
+  .pg-nav-btn { padding:8px 12px;font-size:10px; }
+  .footer { padding:10px 16px;gap:10px; }
+  .ft-copy { font-size:9px; }
+}
+@media (max-width:480px) {
+  .topbar { padding:0 10px;gap:8px; }
+  .tb-btn { width:32px;height:32px; }
+  .search-input { font-size:12px;padding:7px 14px 7px 36px; }
+  pre { font-size:11.5px;padding:14px 16px; }
+  .g3 { grid-template-columns:1fr; }
+  .flow-row { gap:4px; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-orbs">
+  <div class="orb orb1"></div><div class="orb orb2"></div>
+  <div class="orb orb3"></div><div class="orb orb4"></div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <button class="tb-btn active" id="sbToggle" onclick="toggleSidebar()" title="Toggle Sidebar (S)">☰</button>
+  <button class="home-btn" onclick="goTo(0)" title="Home">🏠 <span>Home</span></button>
+  <div class="tb-logo">
+    <span class="tb-logo-bracket">&lt;</span>fstream<span class="tb-logo-bracket">&gt;</span>
+  </div>
+
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" id="searchInput" type="text"
+      placeholder="Search topics, keywords, functions…"
+      oninput="onSearch(this.value)"
+      onfocus="showResults()"
+      autocomplete="off">
+    <span class="search-kbd">⌘K</span>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+
+  <div class="tb-controls">
+    <button class="tb-btn" onclick="showShortcuts()" title="Keyboard shortcuts">⌨</button>
+  </div>
+</div>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-top">
+      <div class="sb-title">C++ File Handling</div>
+      <div class="sb-sub">Complete Reference Guide</div>
+    </div>
+    <div class="sb-scroll"><div class="nb-sec">Navigation</div><div id="sidebarNav"></div></div>
+  </aside>
+
+  <main class="content" id="contentArea">
+    <div class="page-wrap" id="pageWrap"></div>
+  </main>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <span class="ft-copy">© 2026 Built by <strong>Muhammad Mustafa Amir</strong></span>
+  <div class="ft-spacer"></div>
+  <button class="ft-about" onclick="openAbout()">About</button>
+  <div class="social-row">
+    <a class="sl li" href="#" onclick="openLinkedIn(event)" title="LinkedIn">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z" stroke="#0a66c2" stroke-width="1.8" stroke-linecap="round"/><rect x="2" y="9" width="4" height="12" stroke="#0a66c2" stroke-width="1.8" stroke-linecap="round"/><circle cx="4" cy="4" r="2" stroke="#0a66c2" stroke-width="1.8"/></svg>
+    </a>
+    <a class="sl gh" href="https://github.com/Syntrojex" target="_blank" rel="noopener" title="GitHub">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" stroke="#c9d1d9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <a class="sl pf" href="https://mustafa-amir.vercel.app" target="_blank" rel="noopener" title="Portfolio">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#d2a8ff" stroke-width="1.8"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" stroke="#d2a8ff" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </a>
+  </div>
+</footer>
+
+<!-- ABOUT POPUP -->
+<div class="overlay" id="aboutOverlay" onclick="closeAbout(event)">
+  <div class="about-card" onclick="event.stopPropagation()">
+    <div class="about-head">
+      <div>
+        <div class="about-icon">📘</div>
+        <div class="about-ht">C++ File Handling Guide</div>
+        <div class="about-hs">Complete Interactive Reference · 2026</div>
+      </div>
+      <button class="about-x" onclick="closeAbout()">✕</button>
+    </div>
+    <div class="about-body">
+      <p>A complete, interactive reference for <strong>C++ File Handling</strong> — covering every concept from file streams to binary operations. Written clearly for beginners, detailed enough for professionals.</p>
+      <div style="margin:14px 0;">
+        <span class="about-chip">📖 13 Chapters</span>
+        <span class="about-chip">🎨 Visual Diagrams</span>
+        <span class="about-chip">🔍 Deep Search</span>
+        <span class="about-chip">⌨ Shortcuts</span>
+      </div>
+    </div>
+    <div class="about-footer">Built with care by <strong>Muhammad Mustafa Amir</strong></div>
+  </div>
+</div>
+
+<!-- SHORTCUTS MODAL -->
+<div class="shortcuts-modal" id="shortcutsModal" onclick="hideShortcuts(event)">
+  <div class="shortcuts-card" onclick="event.stopPropagation()">
+    <div class="shortcuts-head">
+      <h3>⌨ Keyboard Shortcuts</h3>
+      <button class="sc-close" onclick="hideShortcuts()" title="Close">✕</button>
+    </div>
+    <div class="shortcuts-body">
+      <div class="sc-row"><span class="sc-desc">Search</span><div class="sc-keys"><span class="sc-key">Ctrl</span><span class="sc-key">K</span></div></div>
+      <div class="sc-row"><span class="sc-desc">Next chapter</span><div class="sc-keys"><span class="sc-key">→</span></div></div>
+      <div class="sc-row"><span class="sc-desc">Previous chapter</span><div class="sc-keys"><span class="sc-key">←</span></div></div>
+      <div class="sc-row"><span class="sc-desc">Toggle sidebar</span><div class="sc-keys"><span class="sc-key">S</span></div></div>
+      <div class="sc-row"><span class="sc-desc">Close modal</span><div class="sc-keys"><span class="sc-key">Esc</span></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── CONTENT DATA ── */
+const C = {
+home: `<div class="welcome">
+  <div class="wl-badge">The Definitive C++ Reference</div>
+  <h1 class="wl-h1">C++ <span class="acc">File</span><br><span class="main">Handling</span></h1>
+  <p class="wl-sub">From <code>#include &lt;fstream&gt;</code> to binary files — every concept, every example, with visual diagrams.</p>
+  <div class="wl-stats">
+    <div class="wl-stat"><div class="wl-stat-num">13</div><div class="wl-stat-lbl">Chapters</div></div>
+    <div class="wl-stat"><div class="wl-stat-num">40+</div><div class="wl-stat-lbl">Code Examples</div></div>
+    <div class="wl-stat"><div class="wl-stat-num">15+</div><div class="wl-stat-lbl">Visual Diagrams</div></div>
+    <div class="wl-stat"><div class="wl-stat-num">100%</div><div class="wl-stat-lbl">Free</div></div>
+  </div>
+  <div class="wl-grid">
+    <div class="wl-card" onclick="goTo(1)"><div class="wl-icon">📦</div><div class="wl-ct">Start Here</div><div class="wl-cd">What is fstream and why you need it</div></div>
+    <div class="wl-card" onclick="goTo(2)"><div class="wl-icon">🌊</div><div class="wl-ct">Stream Classes</div><div class="wl-cd">ifstream vs ofstream vs fstream</div></div>
+    <div class="wl-card" onclick="goTo(5)"><div class="wl-icon">✏️</div><div class="wl-ct">Write Data</div><div class="wl-cd">Put data into files immediately</div></div>
+    <div class="wl-card" onclick="goTo(13)"><div class="wl-icon">⚡</div><div class="wl-ct">Binary Files</div><div class="wl-cd">Raw bytes — fast and compact</div></div>
+    <div class="wl-card" onclick="goTo(14)"><div class="wl-icon">📜</div><div class="wl-ct">Cheat Sheet</div><div class="wl-cd">All functions in one quick reference</div></div>
+    <div class="wl-card" onclick="goTo(11)"><div class="wl-icon">🎯</div><div class="wl-ct">seek · tell · eof</div><div class="wl-cd">Navigate inside any file</div></div>
+  </div>
+</div>`,
+
+ch1(){return`<span class="pg-badge">Chapter 01</span>
+<h2 class="pg-title">The Header<br>#include &lt;fstream&gt;</h2>
+<div class="reading-time">⏱ ~3 min read</div>
+<p class="pg-lead">Before you can talk to a file, you must include the library that gives C++ the power to do so.</p>
+
+<div class="concept-panel reveal">
+  <div class="concept-label">How File I/O Works — Step by Step</div>
+  <ul class="step-list">
+    <li class="step-item"><span class="step-num">1</span><span class="step-text">Include <strong>&lt;fstream&gt;</strong> — this gives you access to file stream classes</span></li>
+    <li class="step-item"><span class="step-num">2</span><span class="step-text">Create a <strong>stream object</strong> (ifstream/ofstream/fstream) — this is your file pipe</span></li>
+    <li class="step-item"><span class="step-num">3</span><span class="step-text"><strong>Open</strong> the file by passing its name — C++ connects to the file on disk</span></li>
+    <li class="step-item"><span class="step-num">4</span><span class="step-text"><strong>Read or write</strong> using &gt;&gt; or &lt;&lt; — just like cin/cout</span></li>
+    <li class="step-item"><span class="step-num">5</span><span class="step-text"><strong>Close</strong> the file with .close() — flushes data and releases the file lock</span></li>
+  </ul>
+</div>
+
+<div class="diagram reveal">
+  <div class="diagram-title">Stream Flow Concept</div>
+  <div class="flow-row">
+    <div class="flow-box prog">💻 Program<br><small>Your C++ code</small></div>
+    <div class="flow-arrow"><div class="arrow-line">→</div><div class="arrow-label">WRITE (ofstream)</div></div>
+    <div class="flow-box file">📄 File<br><small>Disk storage</small></div>
+  </div>
+  <div class="flow-row" style="margin-top:12px">
+    <div class="flow-box prog">💻 Program<br><small>Your C++ code</small></div>
+    <div class="flow-arrow"><div class="arrow-line">←</div><div class="arrow-label">READ (ifstream)</div></div>
+    <div class="flow-box file">📄 File<br><small>Disk storage</small></div>
+  </div>
+</div>
+
+<p>Everything related to file I/O lives in <code>&lt;fstream&gt;</code> — short for <strong>file stream</strong>. A stream is a pipe: data flows through it into a file (writing) or out of a file (reading).</p>
+<div class="analogy reveal"><div class="analogy-t">💡 Analogy</div><p>Think of a stream like a water pipe. <strong>ifstream</strong> = pipe flowing FROM the file TO your program. <strong>ofstream</strong> = pipe flowing FROM your program TO the file.</p></div>`+
+codeBlock('Required Includes',`<span class="mc">#include</span> <span class="st">&lt;iostream&gt;</span>   <span class="cm">// for cin, cout</span>
+<span class="mc">#include</span> <span class="st">&lt;fstream&gt;</span>    <span class="cm">// ifstream, ofstream, fstream</span>
+<span class="mc">#include</span> <span class="st">&lt;string&gt;</span>     <span class="cm">// for std::string</span>
+<span class="kw">using namespace</span> <span class="va">std</span><span class="pu">;</span>`)+
+`<div class="box info reveal"><div class="bt">📌 Key Fact</div><p>One <code>#include &lt;fstream&gt;</code> gives all three classes: <code>ifstream</code>, <code>ofstream</code>, and <code>fstream</code>. All three live in the same header!</p></div>
+<div class="box tip reveal"><div class="bt">✅ Always Close Files</div><p>Call <code>file.close()</code> when done. Flushes unwritten data and frees the file. Forgetting can corrupt data or block access to the file by other programs!</p></div>`;},
+
+ch2(){return`<span class="pg-badge">Chapter 02</span>
+<h2 class="pg-title">The Three Stream Classes</h2>
+<div class="reading-time">⏱ ~4 min read</div>
+<p class="pg-lead">Three tools. Each has one job. Know which one to use when.</p>
+
+<div class="diagram reveal">
+  <div class="diagram-title">Stream Class Comparison</div>
+  <div class="flow-row" style="gap:16px;flex-wrap:wrap;justify-content:flex-start;">
+    <div style="flex:1;min-width:160px;background:rgba(86,211,100,.08);border:1px solid rgba(86,211,100,.25);border-radius:12px;padding:16px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--g);font-weight:700;margin-bottom:8px;">ifstream</div>
+      <div style="font-size:32px;margin-bottom:8px;">👁</div>
+      <div style="font-size:12px;color:var(--mu);">READ only<br>File → Program</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--g);">Like your eyes — receive only</div>
+    </div>
+    <div style="flex:1;min-width:160px;background:rgba(121,192,255,.08);border:1px solid rgba(121,192,255,.25);border-radius:12px;padding:16px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--b);font-weight:700;margin-bottom:8px;">ofstream</div>
+      <div style="font-size:32px;margin-bottom:8px;">✏️</div>
+      <div style="font-size:12px;color:var(--mu);">WRITE only<br>Program → File</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--b);">Like your pen — write only</div>
+    </div>
+    <div style="flex:1;min-width:160px;background:rgba(210,168,255,.08);border:1px solid rgba(210,168,255,.25);border-radius:12px;padding:16px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--p);font-weight:700;margin-bottom:8px;">fstream</div>
+      <div style="font-size:32px;margin-bottom:8px;">🔄</div>
+      <div style="font-size:12px;color:var(--mu);">READ + WRITE<br>Both directions</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--p);">Like a pencil — read and erase</div>
+    </div>
+  </div>
+</div>
+
+<div class="tw reveal"><table><tr><th>Class</th><th>Direction</th><th>Default Mode</th><th>Use When</th></tr>
+<tr><td class="to">ifstream</td><td class="tg">File → Program (READ)</td><td><code>ios::in</code></td><td>You want to READ from a file</td></tr>
+<tr><td class="to">ofstream</td><td class="tb">Program → File (WRITE)</td><td><code>ios::out</code></td><td>You want to WRITE into a file</td></tr>
+<tr><td class="to">fstream</td><td class="tr">Both directions</td><td>None (must specify)</td><td>You need READ and WRITE same file</td></tr>
+</table></div>`+
+codeBlock('All Three — Usage Examples',`<span class="cm">// ifstream — READ only</span>
+<span class="ty">ifstream</span> <span class="va">fin</span><span class="pu">(</span><span class="st">"data.txt"</span><span class="pu">);</span>
+<span class="kw">if</span> <span class="pu">(!</span><span class="va">fin</span><span class="pu">) {</span> <span class="va">cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Error!"</span><span class="pu">;</span> <span class="kw">return</span> <span class="nu">1</span><span class="pu">; }</span>
+<span class="ty">int</span> <span class="va">x</span><span class="pu">;</span> <span class="va">fin</span> <span class="op">&gt;&gt;</span> <span class="va">x</span><span class="pu">;</span> <span class="va">fin</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>
+
+<span class="cm">// ofstream — WRITE only (creates / clears file)</span>
+<span class="ty">ofstream</span> <span class="va">fout</span><span class="pu">(</span><span class="st">"output.txt"</span><span class="pu">);</span>
+<span class="va">fout</span> <span class="op">&lt;&lt;</span> <span class="st">"Hello World"</span> <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span> <span class="va">fout</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>
+
+<span class="cm">// fstream — READ + WRITE (must specify modes)</span>
+<span class="ty">fstream</span> <span class="va">f</span><span class="pu">(</span><span class="st">"file.txt"</span><span class="pu">,</span> <span class="va">ios</span><span class="pu">::</span><span class="va">in</span> <span class="op">|</span> <span class="va">ios</span><span class="pu">::</span><span class="va">out</span><span class="pu">);</span>
+<span class="va">f</span> <span class="op">&lt;&lt;</span> <span class="st">"Writing"</span><span class="pu">;</span>
+<span class="va">f</span><span class="pu">.</span><span class="fn">seekg</span><span class="pu">(</span><span class="nu">0</span><span class="pu">);</span> <span class="ty">string</span> <span class="va">s</span><span class="pu">;</span> <span class="va">f</span> <span class="op">&gt;&gt;</span> <span class="va">s</span><span class="pu">;</span> <span class="va">f</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>`)+
+`<div class="box warn reveal"><div class="bt">⚠️ ofstream Warning!</div><p><code>ofstream</code> by default <strong>ERASES ALL content</strong> of an existing file. Use <code>ios::app</code> to add without erasing.</p></div>`;},
+
+ch3(){return`<span class="pg-badge">Chapter 03</span>
+<h2 class="pg-title">File Modes — ios Flags</h2>
+<div class="reading-time">⏱ ~4 min read</div>
+<p class="pg-lead">File modes tell C++ HOW to open a file — read, write, append, binary, or combinations.</p>
+
+<div class="diagram reveal">
+  <div class="diagram-title">Mode Flags Visual Reference</div>
+  <div class="mode-grid">
+    <div class="mode-tag in">ios::in &nbsp;📥 READ</div>
+    <div class="mode-tag out">ios::out &nbsp;📤 WRITE</div>
+    <div class="mode-tag app">ios::app &nbsp;➕ APPEND</div>
+    <div class="mode-tag bin">ios::binary &nbsp;⚙ BINARY</div>
+    <div class="mode-tag trn">ios::trunc &nbsp;🗑 TRUNCATE</div>
+    <div class="mode-tag out" style="color:var(--p);border-color:rgba(210,168,255,.3);background:rgba(210,168,255,.1);">ios::ate &nbsp;⏩ AT-END</div>
+  </div>
+</div>
+
+<div class="tw reveal"><table><tr><th>Flag</th><th>Meaning</th><th>Default For</th></tr>
+<tr><td class="to">ios::in</td><td>Open for reading. File must exist.</td><td class="tg">ifstream</td></tr>
+<tr><td class="to">ios::out</td><td>Open for writing. Creates / clears file.</td><td class="tb">ofstream</td></tr>
+<tr><td class="to">ios::app</td><td>Append — add at END. Never erases.</td><td>—</td></tr>
+<tr><td class="to">ios::ate</td><td>Move to end on open. Can write anywhere.</td><td>—</td></tr>
+<tr><td class="to">ios::trunc</td><td>Delete all content when opening.</td><td>—</td></tr>
+<tr><td class="to">ios::binary</td><td>Open in binary mode (raw bytes).</td><td>—</td></tr>
+</table></div>
+
+<h3 class="sh">Combining Modes with | (OR)</h3>
+
+<div class="concept-panel reveal">
+  <div class="concept-label">The | Operator — Combining Flags</div>
+  <p style="font-size:13.5px;color:var(--mu);margin-bottom:10px;">The <code>|</code> (bitwise OR) operator lets you combine multiple flags. Think of it like checking multiple boxes at once:</p>
+  <ul class="step-list">
+    <li class="step-item"><span class="step-num">📥</span><span class="step-text"><strong>ios::in | ios::out</strong> — Read AND write, file must exist, no erase</span></li>
+    <li class="step-item"><span class="step-num">📤</span><span class="step-text"><strong>ios::out | ios::trunc</strong> — Write and erase everything first (default ofstream behavior)</span></li>
+    <li class="step-item"><span class="step-num">⚙</span><span class="step-text"><strong>ios::in | ios::binary</strong> — Read raw bytes (for binary files like images/data)</span></li>
+    <li class="step-item"><span class="step-num">➕</span><span class="step-text"><strong>ios::out | ios::app</strong> — Add to end, never destroy existing content</span></li>
+  </ul>
+</div>`+
+codeBlock('Mode Combinations',`<span class="cm">// Append — KEEP existing, add to end</span>
+<span class="ty">ofstream</span> <span class="va">f3</span><span class="pu">(</span><span class="st">"data.txt"</span><span class="pu">,</span> <span class="va">ios</span><span class="pu">::</span><span class="va">app</span><span class="pu">);</span>
+
+<span class="cm">// Read + Write (no erase)</span>
+<span class="ty">fstream</span>  <span class="va">f4</span><span class="pu">(</span><span class="st">"data.txt"</span><span class="pu">,</span> <span class="va">ios</span><span class="pu">::</span><span class="va">in</span> <span class="op">|</span> <span class="va">ios</span><span class="pu">::</span><span class="va">out</span><span class="pu">);</span>
+
+<span class="cm">// Read + Write + erase first</span>
+<span class="ty">fstream</span>  <span class="va">f5</span><span class="pu">(</span><span class="st">"data.txt"</span><span class="pu">,</span> <span class="va">ios</span><span class="pu">::</span><span class="va">in</span> <span class="op">|</span> <span class="va">ios</span><span class="pu">::</span><span class="va">out</span> <span class="op">|</span> <span class="va">ios</span><span class="pu">::</span><span class="va">trunc</span><span class="pu">);</span>
+
+<span class="cm">// Binary read</span>
+<span class="ty">ifstream</span> <span class="va">f6</span><span class="pu">(</span><span class="st">"save.dat"</span><span class="pu">,</span> <span class="va">ios</span><span class="pu">::</span><span class="va">in</span> <span class="op">|</span> <span class="va">ios</span><span class="pu">::</span><span class="va">binary</span><span class="pu">);</span>
+
+<span class="cm">// Binary write</span>
+<span class="ty">ofstream</span> <span class="va">f7</span><span class="pu">(</span><span class="st">"save.dat"</span><span class="pu">,</span> <span class="va">ios</span><span class="pu">::</span><span class="va">out</span> <span class="op">|</span> <span class="va">ios</span><span class="pu">::</span><span class="va">binary</span><span class="pu">);</span>`)+
+`<div class="g2 reveal"><div class="gc"><div class="gc-t">ios::app (Append)</div><p>Every write goes to END. Pointer can't be moved for writing. File never erased on open.</p></div><div class="gc"><div class="gc-t">ios::ate (At End)</div><p>Opens and moves pointer to end. But you CAN move the pointer and write anywhere.</p></div></div>
+<div class="box warn reveal"><div class="bt">⚠️ Common Mistake</div><p>Using <code>ofstream</code> without <code>ios::app</code> on an existing file will <strong>silently erase all your data</strong>!</p></div>`;},
+
+ch4(){return`<span class="pg-badge">Chapter 04</span>
+<h2 class="pg-title">File Types &amp; Extensions</h2>
+<div class="reading-time">⏱ ~3 min read</div>
+<p class="pg-lead">C++ can work with almost any file type. The extension is just a name — what matters is how you open it.</p>
+
+<div class="compare-wrap reveal">
+  <div class="compare-col col-a">
+    <div class="compare-header">📝 Text Mode (Default)</div>
+    <div class="compare-row">Human-readable characters</div>
+    <div class="compare-row">Number 42 = chars '4','2' = 2 bytes</div>
+    <div class="compare-row">Open in Notepad and read it</div>
+    <div class="compare-row">Slower (char conversion)</div>
+    <div class="compare-row">Portable across systems</div>
+  </div>
+  <div class="compare-col col-b">
+    <div class="compare-header">⚙ Binary Mode (ios::binary)</div>
+    <div class="compare-row">Raw bytes, exact machine data</div>
+    <div class="compare-row">Number 42 = 1 int = 4 bytes</div>
+    <div class="compare-row">Not readable in Notepad</div>
+    <div class="compare-row">Faster + more compact</div>
+    <div class="compare-row">Exact bit-for-bit storage</div>
+  </div>
+</div>
+
+<div class="tw reveal"><table><tr><th>Extension</th><th>Type</th><th>Mode</th><th>Example</th></tr>
+<tr><td class="to">.txt</td><td>Plain Text</td><td>Default</td><td><code>ifstream f("data.txt");</code></td></tr>
+<tr><td class="to">.csv</td><td>Comma Separated</td><td>Text</td><td><code>ifstream f("records.csv");</code></td></tr>
+<tr><td class="to">.dat</td><td>Data file</td><td>Binary/text</td><td><code>fstream f("save.dat",ios::binary);</code></td></tr>
+<tr><td class="to">.bin</td><td>Binary data</td><td>ios::binary</td><td><code>ofstream f("img.bin",ios::binary);</code></td></tr>
+<tr><td class="to">.cpp</td><td>C++ source</td><td>Text</td><td><code>ifstream f("main.cpp");</code></td></tr>
+<tr><td class="to">.log</td><td>Log files</td><td>ios::app</td><td><code>ofstream f("app.log",ios::app);</code></td></tr>
+<tr><td class="to">.json</td><td>JSON data</td><td>Text</td><td><code>ifstream f("data.json");</code></td></tr>
+</table></div>
+<div class="box info reveal"><div class="bt">📌 Key Insight</div><p>The file extension is just a convention for humans. C++ doesn't care — it will read any file in any mode. <code>.dat</code> files are just text files if you open them without <code>ios::binary</code>!</p></div>`;},
+
+ch5(){return`<span class="pg-badge">Chapter 05</span>
+<h2 class="pg-title">Writing Data to a File</h2>
+<div class="reading-time">⏱ ~5 min read</div>
+<p class="pg-lead">Writing to a file works exactly like cout — use &lt;&lt; to push data in.</p>
+
+<div class="concept-panel reveal">
+  <div class="concept-label">Writing — Mental Model</div>
+  <ul class="step-list">
+    <li class="step-item"><span class="step-num">1</span><span class="step-text">Create <strong>ofstream</strong> object → file is created (or erased if exists)</span></li>
+    <li class="step-item"><span class="step-num">2</span><span class="step-text">Check <strong>if (!file)</strong> → always validate before writing</span></li>
+    <li class="step-item"><span class="step-num">3</span><span class="step-text">Use <strong>file &lt;&lt; data &lt;&lt; endl;</strong> → same as cout, but goes to file</span></li>
+    <li class="step-item"><span class="step-num">4</span><span class="step-text">Use <strong>separators</strong> (spaces/newlines) between values</span></li>
+    <li class="step-item"><span class="step-num">5</span><span class="step-text">Call <strong>file.close()</strong> → flushes buffer to disk</span></li>
+  </ul>
+</div>`+
+codeBlock('Writing Different Data Types',`<span class="mc">#include</span> <span class="st">&lt;iostream&gt;</span>
+<span class="mc">#include</span> <span class="st">&lt;fstream&gt;</span>
+<span class="kw">using namespace</span> <span class="va">std</span><span class="pu">;</span>
+
+<span class="ty">int</span> <span class="fn">main</span><span class="pu">() {</span>
+    <span class="ty">ofstream</span> <span class="va">file</span><span class="pu">(</span><span class="st">"mixed.txt"</span><span class="pu">);</span>
+    <span class="kw">if</span> <span class="pu">(!</span><span class="va">file</span><span class="pu">) {</span> <span class="va">cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Cannot open!"</span><span class="pu">;</span> <span class="kw">return</span> <span class="nu">1</span><span class="pu">; }</span>
+    <span class="ty">int</span>    <span class="va">age</span>   <span class="op">=</span> <span class="nu">21</span><span class="pu">;</span>
+    <span class="ty">float</span>  <span class="va">gpa</span>   <span class="op">=</span> <span class="nu">3.87f</span><span class="pu">;</span>
+    <span class="ty">double</span> <span class="va">pi</span>    <span class="op">=</span> <span class="nu">3.14159265</span><span class="pu">;</span>
+    <span class="ty">char</span>   <span class="va">grade</span> <span class="op">=</span> <span class="st">'A'</span><span class="pu">;</span>
+    <span class="ty">bool</span>   <span class="va">pass</span>  <span class="op">=</span> <span class="kw">true</span><span class="pu">;</span>
+    <span class="va">file</span> <span class="op">&lt;&lt;</span> <span class="st">"Age: "</span>   <span class="op">&lt;&lt;</span> <span class="va">age</span>   <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+    <span class="va">file</span> <span class="op">&lt;&lt;</span> <span class="st">"GPA: "</span>   <span class="op">&lt;&lt;</span> <span class="va">gpa</span>   <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+    <span class="va">file</span> <span class="op">&lt;&lt;</span> <span class="st">"Pi: "</span>    <span class="op">&lt;&lt;</span> <span class="va">pi</span>    <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+    <span class="va">file</span> <span class="op">&lt;&lt;</span> <span class="st">"Grade: "</span> <span class="op">&lt;&lt;</span> <span class="va">grade</span> <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+    <span class="va">file</span> <span class="op">&lt;&lt;</span> <span class="st">"Pass: "</span>  <span class="op">&lt;&lt;</span> <span class="va">pass</span>  <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+    <span class="va">file</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>
+    <span class="kw">return</span> <span class="nu">0</span><span class="pu">;</span>
+<span class="pu">}</span>`)+
+`<div class="out-label">📄 mixed.txt:</div><div class="out-box">Age: 21
+GPA: 3.87
+Pi: 3.14159265
+Grade: A
+Pass: 1</div>
+<div class="box tip reveal"><div class="bt">✅ Separator Strategy</div><p>Always separate numbers with spaces or newlines. Without separators, <code>21</code> and <code>3</code> become <code>213</code> — impossible to split back when reading!</p></div>`;},
+
+ch6(){return`<span class="pg-badge">Chapter 06</span>
+<h2 class="pg-title">Reading Data from a File</h2>
+<div class="reading-time">⏱ ~5 min read</div>
+<p class="pg-lead">Reading works just like cin — use &gt;&gt; for words/numbers, getline() for full lines.</p>
+
+<div class="diagram reveal">
+  <div class="diagram-title">Reading Methods — Which One to Use?</div>
+  <div class="g3" style="margin:0;">
+    <div class="gc" style="border-color:rgba(86,211,100,.2);">
+      <div class="gc-icon">📝</div>
+      <div class="gc-t" style="color:var(--g);">&gt;&gt; Operator</div>
+      <p>Reads word-by-word. Stops at spaces/newlines. Best for numbers and single words.</p>
+    </div>
+    <div class="gc" style="border-color:rgba(121,192,255,.2);">
+      <div class="gc-icon">📜</div>
+      <div class="gc-t" style="color:var(--b);">getline()</div>
+      <p>Reads full lines including spaces. Best for sentences and CSV parsing.</p>
+    </div>
+    <div class="gc" style="border-color:rgba(210,168,255,.2);">
+      <div class="gc-icon">🔤</div>
+      <div class="gc-t" style="color:var(--p);">.get()</div>
+      <p>Reads one character at a time. Best for character-by-character processing.</p>
+    </div>
+  </div>
+</div>
+
+<h3 class="sh">Method 1 — &gt;&gt; (word/number by word)</h3>`+
+codeBlock('Reading with >>',`<span class="cm">// File "numbers.txt" contains: 10 20 30 40 50</span>
+<span class="ty">ifstream</span> <span class="va">file</span><span class="pu">(</span><span class="st">"numbers.txt"</span><span class="pu">);</span>
+<span class="ty">int</span> <span class="va">a</span><span class="pu">,</span><span class="va">b</span><span class="pu">,</span><span class="va">c</span><span class="pu">,</span><span class="va">d</span><span class="pu">,</span><span class="va">e</span><span class="pu">;</span>
+<span class="va">file</span> <span class="op">&gt;&gt;</span> <span class="va">a</span> <span class="op">&gt;&gt;</span> <span class="va">b</span> <span class="op">&gt;&gt;</span> <span class="va">c</span> <span class="op">&gt;&gt;</span> <span class="va">d</span> <span class="op">&gt;&gt;</span> <span class="va">e</span><span class="pu">;</span>
+<span class="va">cout</span> <span class="op">&lt;&lt;</span> <span class="va">a</span> <span class="op">&lt;&lt;</span> <span class="st">" "</span> <span class="op">&lt;&lt;</span> <span class="va">b</span> <span class="op">&lt;&lt;</span> <span class="st">" "</span> <span class="op">&lt;&lt;</span> <span class="va">c</span><span class="pu">;</span>
+<span class="va">file</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>`)+
+`<h3 class="sh">Method 2 — getline() (full lines)</h3>`+
+codeBlock('Reading Line by Line',`<span class="ty">ifstream</span> <span class="va">file</span><span class="pu">(</span><span class="st">"poem.txt"</span><span class="pu">);</span>
+<span class="ty">string</span> <span class="va">line</span><span class="pu">;</span>
+<span class="kw">while</span> <span class="pu">(</span><span class="fn">getline</span><span class="pu">(</span><span class="va">file</span><span class="pu">,</span> <span class="va">line</span><span class="pu">)) {</span>
+    <span class="va">cout</span> <span class="op">&lt;&lt;</span> <span class="va">line</span> <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+<span class="pu">}</span>
+<span class="va">file</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>`)+
+`<h3 class="sh">Method 3 — get() (char by char)</h3>`+
+codeBlock('Character by Character',`<span class="ty">ifstream</span> <span class="va">file</span><span class="pu">(</span><span class="st">"data.txt"</span><span class="pu">);</span>
+<span class="ty">char</span> <span class="va">ch</span><span class="pu">;</span>
+<span class="kw">while</span> <span class="pu">(</span><span class="va">file</span><span class="pu">.</span><span class="fn">get</span><span class="pu">(</span><span class="va">ch</span><span class="pu">))</span>
+    <span class="va">cout</span> <span class="op">&lt;&lt;</span> <span class="va">ch</span><span class="pu">;</span>
+<span class="va">file</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>`)+
+`<div class="box warn reveal"><div class="bt">⚠️ Mixed &gt;&gt; and getline() Problem</div><p>After using <code>&gt;&gt;</code>, a newline is left in the buffer. Call <code>file.ignore()</code> before <code>getline()</code> to skip it, or it will read an empty line!</p></div>`;},
+
+ch7(){return`<span class="pg-badge">Chapter 07</span>
+<h2 class="pg-title">1D Arrays in Files</h2>
+<div class="reading-time">⏱ ~4 min read</div>
+<p class="pg-lead">Store and retrieve arrays — row by row, one element per line.</p>`+
+codeBlock('Write 1D Array to File',`<span class="ty">int</span> <span class="va">arr</span><span class="pu">[] = {</span><span class="nu">10</span><span class="pu">,</span><span class="nu">20</span><span class="pu">,</span><span class="nu">30</span><span class="pu">,</span><span class="nu">40</span><span class="pu">,</span><span class="nu">50</span><span class="pu">};</span>
+<span class="ty">ofstream</span> <span class="va">file</span><span class="pu">(</span><span class="st">"array1d.txt"</span><span class="pu">);</span>
+<span class="kw">for</span> <span class="pu">(</span><span class="ty">int</span> <span class="va">i</span><span class="op">=</span><span class="nu">0</span><span class="pu">;</span> <span class="va">i</span><span class="op">&lt;</span><span class="nu">5</span><span class="pu">;</span> <span class="va">i</span><span class="op">++</span><span class="pu">)</span>
+    <span class="va">file</span> <span class="op">&lt;&lt;</span> <span class="va">arr</span><span class="pu">[</span><span class="va">i</span><span class="pu">]</span> <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+<span class="va">file</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>`)+
+`<div class="out-label">📄 array1d.txt:</div><div class="out-box">10
+20
+30
+40
+50</div>`+
+codeBlock('Read 1D Array Back',`<span class="ty">int</span> <span class="va">arr</span><span class="pu">[</span><span class="nu">5</span><span class="pu">];</span>
+<span class="ty">ifstream</span> <span class="va">file</span><span class="pu">(</span><span class="st">"array1d.txt"</span><span class="pu">);</span>
+<span class="kw">for</span> <span class="pu">(</span><span class="ty">int</span> <span class="va">i</span><span class="op">=</span><span class="nu">0</span><span class="pu">;</span> <span class="va">i</span><span class="op">&lt;</span><span class="nu">5</span><span class="pu">;</span> <span class="va">i</span><span class="op">++</span><span class="pu">)</span>
+    <span class="va">file</span> <span class="op">&gt;&gt;</span> <span class="va">arr</span><span class="pu">[</span><span class="va">i</span><span class="pu">];</span>
+<span class="va">file</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>
+<span class="kw">for</span> <span class="pu">(</span><span class="ty">int</span> <span class="va">i</span><span class="op">=</span><span class="nu">0</span><span class="pu">;</span> <span class="va">i</span><span class="op">&lt;</span><span class="nu">5</span><span class="pu">;</span> <span class="va">i</span><span class="op">++</span><span class="pu">)</span>
+    <span class="va">cout</span> <span class="op">&lt;&lt;</span> <span class="va">arr</span><span class="pu">[</span><span class="va">i</span><span class="pu">]</span> <span class="op">&lt;&lt;</span> <span class="st">" "</span><span class="pu">;</span>`)+
+`<div class="box tip reveal"><div class="bt">✅ Pro Tip — Store Size Too</div><p>Write the array size as the first line. When reading back, read size first so you know how many elements to read — works even if size changes!</p></div>`;},
+
+ch8(){return`<span class="pg-badge">Chapter 08</span>
+<h2 class="pg-title">2D Arrays in Files</h2>
+<div class="reading-time">⏱ ~4 min read</div>
+<p class="pg-lead">Row-by-row writing and reading — same pattern, one extra loop.</p>`+
+codeBlock('Write & Read 2D Array',`<span class="cm">// WRITE 3x3 matrix</span>
+<span class="ty">int</span> <span class="va">mat</span><span class="pu">[</span><span class="nu">3</span><span class="pu">][</span><span class="nu">3</span><span class="pu">] = {{</span><span class="nu">1</span><span class="pu">,</span><span class="nu">2</span><span class="pu">,</span><span class="nu">3</span><span class="pu">},{</span><span class="nu">4</span><span class="pu">,</span><span class="nu">5</span><span class="pu">,</span><span class="nu">6</span><span class="pu">},{</span><span class="nu">7</span><span class="pu">,</span><span class="nu">8</span><span class="pu">,</span><span class="nu">9</span><span class="pu">}};</span>
+<span class="ty">ofstream</span> <span class="va">fout</span><span class="pu">(</span><span class="st">"matrix.txt"</span><span class="pu">);</span>
+<span class="kw">for</span> <span class="pu">(</span><span class="ty">int</span> <span class="va">i</span><span class="op">=</span><span class="nu">0</span><span class="pu">;</span> <span class="va">i</span><span class="op">&lt;</span><span class="nu">3</span><span class="pu">;</span> <span class="va">i</span><span class="op">++</span><span class="pu">) {</span>
+    <span class="kw">for</span> <span class="pu">(</span><span class="ty">int</span> <span class="va">j</span><span class="op">=</span><span class="nu">0</span><span class="pu">;</span> <span class="va">j</span><span class="op">&lt;</span><span class="nu">3</span><span class="pu">;</span> <span class="va">j</span><span class="op">++</span><span class="pu">)</span>
+        <span class="va">fout</span> <span class="op">&lt;&lt;</span> <span class="va">mat</span><span class="pu">[</span><span class="va">i</span><span class="pu">][</span><span class="va">j</span><span class="pu">]</span> <span class="op">&lt;&lt;</span> <span class="st">" "</span><span class="pu">;</span>
+    <span class="va">fout</span> <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+<span class="pu">}</span>
+<span class="va">fout</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>
+<span class="cm">// READ back</span>
+<span class="ty">int</span> <span class="va">m2</span><span class="pu">[</span><span class="nu">3</span><span class="pu">][</span><span class="nu">3</span><span class="pu">];</span>
+<span class="ty">ifstream</span> <span class="va">fin</span><span class="pu">(</span><span class="st">"matrix.txt"</span><span class="pu">);</span>
+<span class="kw">for</span> <span class="pu">(</span><span class="ty">int</span> <span class="va">i</span><span class="op">=</span><span class="nu">0</span><span class="pu">;</span> <span class="va">i</span><span class="op">&lt;</span><span class="nu">3</span><span class="pu">;</span> <span class="va">i</span><span class="op">++</span><span class="pu">)</span>
+    <span class="kw">for</span> <span class="pu">(</span><span class="ty">int</span> <span class="va">j</span><span class="op">=</span><span class="nu">0</span><span class="pu">;</span> <span class="va">j</span><span class="op">&lt;</span><span class="nu">3</span><span class="pu">;</span> <span class="va">j</span><span class="op">++</span><span class="pu">)</span>
+        <span class="va">fin</span> <span class="op">&gt;&gt;</span> <span class="va">m2</span><span class="pu">[</span><span class="va">i</span><span class="pu">][</span><span class="va">j</span><span class="pu">];</span>
+<span class="va">fin</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>`)+
+`<div class="out-label">📄 matrix.txt:</div><div class="out-box">1 2 3 
+4 5 6 
+7 8 9 </div>`;},
+
+ch9(){return`<span class="pg-badge">Chapter 09</span>
+<h2 class="pg-title">Character Arrays &amp; getline()</h2>
+<div class="reading-time">⏱ ~3 min read</div>
+<p class="pg-lead">Char arrays (C-strings) need getline with a size limit. std::string is almost always better.</p>`+
+codeBlock('Char Array — Write & Read',`<span class="cm">// WRITE char array</span>
+<span class="ty">char</span> <span class="va">name</span><span class="pu">[] =</span> <span class="st">"Muhammad Mustafa Amir"</span><span class="pu">;</span>
+<span class="ty">ofstream</span> <span class="va">fout</span><span class="pu">(</span><span class="st">"name.txt"</span><span class="pu">);</span>
+<span class="va">fout</span> <span class="op">&lt;&lt;</span> <span class="va">name</span> <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+<span class="va">fout</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>
+<span class="cm">// READ char array — use fin.getline(arr, size)</span>
+<span class="ty">char</span> <span class="va">buf</span><span class="pu">[</span><span class="nu">50</span><span class="pu">];</span>
+<span class="ty">ifstream</span> <span class="va">fin</span><span class="pu">(</span><span class="st">"name.txt"</span><span class="pu">);</span>
+<span class="va">fin</span><span class="pu">.</span><span class="fn">getline</span><span class="pu">(</span><span class="va">buf</span><span class="pu">,</span> <span class="nu">50</span><span class="pu">);</span>
+<span class="va">cout</span> <span class="op">&lt;&lt;</span> <span class="va">buf</span><span class="pu">;</span>
+<span class="va">fin</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>`)+
+`<div class="box warn reveal"><div class="bt">⚠️ Buffer Overflow Risk</div><p>Always pass the buffer SIZE to <code>fin.getline(arr, size)</code>. If the line is longer than size, the extra chars are discarded — but at least your program won't crash!</p></div>`;},
+
+ch10(){return`<span class="pg-badge">Chapter 10</span>
+<h2 class="pg-title">std::string in Files</h2>
+<div class="reading-time">⏱ ~3 min read</div>
+<p class="pg-lead">std::string is the modern way — dynamic size, no buffer limits, clean syntax.</p>`+
+codeBlock('std::string — Write & Read Lines',`<span class="mc">#include</span> <span class="st">&lt;string&gt;</span>
+<span class="cm">// WRITE multiple strings</span>
+<span class="ty">ofstream</span> <span class="va">fout</span><span class="pu">(</span><span class="st">"strings.txt"</span><span class="pu">);</span>
+<span class="ty">string</span> <span class="va">lines</span><span class="pu">[] = {</span><span class="st">"Hello World"</span><span class="pu">,</span> <span class="st">"C++ is great"</span><span class="pu">,</span> <span class="st">"File I/O rocks"</span><span class="pu">};</span>
+<span class="kw">for</span> <span class="pu">(</span><span class="kw">auto</span><span class="op">&</span> <span class="va">s</span> <span class="pu">:</span> <span class="va">lines</span><span class="pu">)</span> <span class="va">fout</span> <span class="op">&lt;&lt;</span> <span class="va">s</span> <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+<span class="va">fout</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>
+<span class="cm">// READ all lines back</span>
+<span class="ty">ifstream</span> <span class="va">fin</span><span class="pu">(</span><span class="st">"strings.txt"</span><span class="pu">);</span>
+<span class="ty">string</span> <span class="va">line</span><span class="pu">;</span>
+<span class="kw">while</span> <span class="pu">(</span><span class="fn">getline</span><span class="pu">(</span><span class="va">fin</span><span class="pu">,</span> <span class="va">line</span><span class="pu">))</span>
+    <span class="va">cout</span> <span class="op">&lt;&lt;</span> <span class="va">line</span> <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+<span class="va">fin</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>`)+
+`<div class="compare-wrap reveal">
+  <div class="compare-col col-a">
+    <div class="compare-header">char array (Legacy)</div>
+    <div class="compare-row">Fixed size at compile time</div>
+    <div class="compare-row">fin.getline(arr, size)</div>
+    <div class="compare-row">Buffer overflow risk</div>
+    <div class="compare-row">Use for embedded/C compat only</div>
+  </div>
+  <div class="compare-col col-b">
+    <div class="compare-header">std::string (Modern)</div>
+    <div class="compare-row">Dynamic, grows automatically</div>
+    <div class="compare-row">getline(fin, str)</div>
+    <div class="compare-row">No overflow risk</div>
+    <div class="compare-row">Always prefer this</div>
+  </div>
+</div>`;},
+
+ch11(){return`<span class="pg-badge">Chapter 11</span>
+<h2 class="pg-title">File Control<br>seek · tell · eof</h2>
+<div class="reading-time">⏱ ~5 min read</div>
+<p class="pg-lead">Move around inside a file like a cursor. Jump to any byte position instantly.</p>
+
+<div class="diagram reveal">
+  <div class="diagram-title">File Pointer — How it Works</div>
+  <div style="background:var(--sf2);border-radius:8px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mu);overflow-x:auto;">
+    <div style="margin-bottom:8px;color:var(--dm);font-size:10px;letter-spacing:1px;">FILE BYTES (each cell = 1 byte):</div>
+    <div class="mem-layout">
+      <div class="mem-cell highlight"><span class="mc-val">H</span><span class="mc-addr">0</span></div>
+      <div class="mem-cell"><span class="mc-val">e</span><span class="mc-addr">1</span></div>
+      <div class="mem-cell"><span class="mc-val">l</span><span class="mc-addr">2</span></div>
+      <div class="mem-cell"><span class="mc-val">l</span><span class="mc-addr">3</span></div>
+      <div class="mem-cell"><span class="mc-val">o</span><span class="mc-addr">4</span></div>
+      <div class="mem-cell"><span class="mc-val">\\n</span><span class="mc-addr">5</span></div>
+      <div class="mem-cell"><span class="mc-val">W</span><span class="mc-addr">6</span></div>
+      <div class="mem-cell"><span class="mc-val">o</span><span class="mc-addr">7</span></div>
+      <div class="mem-cell"><span class="mc-val">r</span><span class="mc-addr">8</span></div>
+      <div class="mem-cell"><span class="mc-val">l</span><span class="mc-addr">9</span></div>
+      <div class="mem-cell"><span class="mc-val">d</span><span class="mc-addr">10</span></div>
+    </div>
+    <div style="margin-top:8px;color:var(--b);font-size:11px;">↑ seekg(0) puts cursor here &nbsp;|&nbsp; seekg(6) → 'W' &nbsp;|&nbsp; tellg() returns current position</div>
+  </div>
+</div>
+
+<div class="tw reveal"><table><tr><th>Function</th><th>Purpose</th></tr>
+<tr><td class="to">seekg(pos)</td><td>Move READ cursor to byte pos from beginning</td></tr>
+<tr><td class="to">seekg(offset, origin)</td><td>Move READ cursor by offset from origin</td></tr>
+<tr><td class="to">seekp(pos)</td><td>Move WRITE cursor to byte pos</td></tr>
+<tr><td class="to">tellg()</td><td>Returns current READ cursor position (bytes from start)</td></tr>
+<tr><td class="to">tellp()</td><td>Returns current WRITE cursor position</td></tr>
+<tr><td class="to">eof()</td><td>Returns true if cursor reached end of file</td></tr>
+<tr><td class="to">ios::beg</td><td>Origin = start of file (byte 0)</td></tr>
+<tr><td class="to">ios::cur</td><td>Origin = current cursor position</td></tr>
+<tr><td class="to">ios::end</td><td>Origin = end of file</td></tr>
+</table></div>`+
+codeBlock('seekg, tellg, eof — Complete Example',`<span class="ty">ifstream</span> <span class="va">file</span><span class="pu">(</span><span class="st">"data.txt"</span><span class="pu">);</span>
+
+<span class="cm">// Get file size using seekg + tellg</span>
+<span class="va">file</span><span class="pu">.</span><span class="fn">seekg</span><span class="pu">(</span><span class="nu">0</span><span class="pu">,</span> <span class="va">ios</span><span class="pu">::</span><span class="va">end</span><span class="pu">);</span>
+<span class="ty">long</span> <span class="va">sz</span> <span class="op">=</span> <span class="va">file</span><span class="pu">.</span><span class="fn">tellg</span><span class="pu">();</span>
+<span class="va">cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Size: "</span> <span class="op">&lt;&lt;</span> <span class="va">sz</span> <span class="op">&lt;&lt;</span> <span class="st">" bytes"</span> <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+
+<span class="cm">// Back to beginning, read until EOF</span>
+<span class="va">file</span><span class="pu">.</span><span class="fn">seekg</span><span class="pu">(</span><span class="nu">0</span><span class="pu">,</span> <span class="va">ios</span><span class="pu">::</span><span class="va">beg</span><span class="pu">);</span>
+<span class="ty">string</span> <span class="va">line</span><span class="pu">;</span>
+<span class="kw">while</span> <span class="pu">(</span><span class="fn">getline</span><span class="pu">(</span><span class="va">file</span><span class="pu">,</span> <span class="va">line</span><span class="pu">))</span>
+    <span class="va">cout</span> <span class="op">&lt;&lt;</span> <span class="va">line</span> <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+
+<span class="cm">// After EOF, must clear before seeking again</span>
+<span class="va">file</span><span class="pu">.</span><span class="fn">clear</span><span class="pu">();</span>
+<span class="va">file</span><span class="pu">.</span><span class="fn">seekg</span><span class="pu">(</span><span class="nu">5</span><span class="pu">,</span> <span class="va">ios</span><span class="pu">::</span><span class="va">beg</span><span class="pu">);</span>
+<span class="va">file</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>`)+
+`<div class="box warn reveal"><div class="bt">⚠️ file.clear() Before seekg After EOF</div><p>Once <code>eof()</code> triggers, the stream enters an error state. You MUST call <code>file.clear()</code> before calling <code>seekg()</code> again, or it will silently fail!</p></div>`;},
+
+ch12(){return`<span class="pg-badge">Chapter 12</span>
+<h2 class="pg-title">Copying File to File</h2>
+<div class="reading-time">⏱ ~3 min read</div>
+<p class="pg-lead">Read from one file, write directly into another — three methods.</p>
+
+<div class="g3 reveal">
+  <div class="gc" style="border-color:rgba(86,211,100,.2);">
+    <div class="gc-icon">⚡</div>
+    <div class="gc-t" style="color:var(--g);">rdbuf()</div>
+    <p>Fastest — 1 line. Copies entire file at OS level.</p>
+  </div>
+  <div class="gc" style="border-color:rgba(121,192,255,.2);">
+    <div class="gc-icon">📜</div>
+    <div class="gc-t" style="color:var(--b);">Line by Line</div>
+    <p>Easy to understand. Can process/modify each line.</p>
+  </div>
+  <div class="gc" style="border-color:rgba(210,168,255,.2);">
+    <div class="gc-icon">🎯</div>
+    <div class="gc-t" style="color:var(--p);">Filtered Copy</div>
+    <p>Copy only lines matching a condition or keyword.</p>
+  </div>
+</div>
+
+<h3 class="sh">Method 1 — rdbuf() (Fastest — 1 line!)</h3>`+
+codeBlock('rdbuf()',`<span class="ty">ifstream</span> <span class="va">src</span><span class="pu">(</span><span class="st">"original.txt"</span><span class="pu">);</span>
+<span class="ty">ofstream</span> <span class="va">dst</span><span class="pu">(</span><span class="st">"copy.txt"</span><span class="pu">);</span>
+<span class="va">dst</span> <span class="op">&lt;&lt;</span> <span class="va">src</span><span class="pu">.</span><span class="fn">rdbuf</span><span class="pu">();</span>  <span class="cm">// copies ENTIRE file — one line!</span>
+<span class="va">src</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span> <span class="va">dst</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>`)+
+`<h3 class="sh">Method 2 — Line by Line</h3>`+
+codeBlock('Line-by-Line Copy',`<span class="ty">ifstream</span> <span class="va">src</span><span class="pu">(</span><span class="st">"source.txt"</span><span class="pu">);</span>
+<span class="ty">ofstream</span> <span class="va">dst</span><span class="pu">(</span><span class="st">"copy.txt"</span><span class="pu">);</span>
+<span class="ty">string</span> <span class="va">line</span><span class="pu">;</span>
+<span class="kw">while</span> <span class="pu">(</span><span class="fn">getline</span><span class="pu">(</span><span class="va">src</span><span class="pu">,</span> <span class="va">line</span><span class="pu">))</span>
+    <span class="va">dst</span> <span class="op">&lt;&lt;</span> <span class="va">line</span> <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+<span class="va">src</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span> <span class="va">dst</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>`)+
+`<h3 class="sh">Method 3 — Filtered Copy</h3>`+
+codeBlock('Copy Lines Containing Keyword',`<span class="ty">ifstream</span> <span class="va">src</span><span class="pu">(</span><span class="st">"data.txt"</span><span class="pu">);</span>
+<span class="ty">ofstream</span> <span class="va">dst</span><span class="pu">(</span><span class="st">"filtered.txt"</span><span class="pu">);</span>
+<span class="ty">string</span> <span class="va">line</span><span class="pu">;</span>
+<span class="kw">while</span> <span class="pu">(</span><span class="fn">getline</span><span class="pu">(</span><span class="va">src</span><span class="pu">,</span> <span class="va">line</span><span class="pu">)) {</span>
+    <span class="kw">if</span> <span class="pu">(</span><span class="va">line</span><span class="pu">.</span><span class="fn">find</span><span class="pu">(</span><span class="st">"Pass"</span><span class="pu">)</span> <span class="op">!=</span> <span class="ty">string</span><span class="pu">::</span><span class="va">npos</span><span class="pu">)</span>
+        <span class="va">dst</span> <span class="op">&lt;&lt;</span> <span class="va">line</span> <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+<span class="pu">}</span>
+<span class="va">src</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span> <span class="va">dst</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>`)+
+`<div class="box tip reveal"><div class="bt">✅ rdbuf() also works for binary</div><p>Open both files with <code>ios::binary</code> and <code>rdbuf()</code> copies exact bytes — perfect for images, executables, or any binary format.</p></div>`;},
+
+ch13(){return`<span class="pg-badge">Chapter 13</span>
+<h2 class="pg-title">Binary Files</h2>
+<div class="reading-time">⏱ ~6 min read</div>
+<p class="pg-lead">Raw bytes — faster, smaller, exact. The foundation of game saves and databases.</p>
+
+<div class="compare-wrap reveal">
+  <div class="compare-col col-a">
+    <div class="compare-header">📝 Text Mode — "12345"</div>
+    <div class="mem-layout" style="margin:8px 0;">
+      <div class="mem-cell"><span class="mc-val">'1'</span><span class="mc-addr">byte</span></div>
+      <div class="mem-cell"><span class="mc-val">'2'</span><span class="mc-addr">byte</span></div>
+      <div class="mem-cell"><span class="mc-val">'3'</span><span class="mc-addr">byte</span></div>
+      <div class="mem-cell"><span class="mc-val">'4'</span><span class="mc-addr">byte</span></div>
+      <div class="mem-cell"><span class="mc-val">'5'</span><span class="mc-addr">byte</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--r);">5 chars = 5 bytes. Human readable.</div>
+  </div>
+  <div class="compare-col col-b">
+    <div class="compare-header">⚙ Binary Mode — int 12345</div>
+    <div class="mem-layout" style="margin:8px 0;">
+      <div class="mem-cell highlight"><span class="mc-val">0x39</span><span class="mc-addr">byte0</span></div>
+      <div class="mem-cell highlight"><span class="mc-val">0x30</span><span class="mc-addr">byte1</span></div>
+      <div class="mem-cell highlight"><span class="mc-val">0x00</span><span class="mc-addr">byte2</span></div>
+      <div class="mem-cell highlight"><span class="mc-val">0x00</span><span class="mc-addr">byte3</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--g);">1 int = 4 bytes. 20% the size!</div>
+  </div>
+</div>
+
+<div class="tw reveal"><table><tr><th>Function</th><th>Syntax</th><th>Purpose</th></tr>
+<tr><td class="to">write()</td><td><code>f.write((char*)&var, sizeof(var))</code></td><td>Write raw bytes to file</td></tr>
+<tr><td class="to">read()</td><td><code>f.read((char*)&var, sizeof(var))</code></td><td>Read raw bytes from file</td></tr>
+</table></div>
+
+<div class="concept-panel reveal">
+  <div class="concept-label">Binary Files — How reinterpret_cast Works</div>
+  <ul class="step-list">
+    <li class="step-item"><span class="step-num">1</span><span class="step-text"><code>write()</code> and <code>read()</code> only accept <strong>char*</strong> (byte pointer)</span></li>
+    <li class="step-item"><span class="step-num">2</span><span class="step-text"><strong>reinterpret_cast&lt;char*&gt;(&var)</strong> tells C++: "treat this variable's memory as raw bytes"</span></li>
+    <li class="step-item"><span class="step-num">3</span><span class="step-text"><strong>sizeof(var)</strong> tells how many bytes to read/write (4 for int, 8 for double, etc.)</span></li>
+    <li class="step-item"><span class="step-num">4</span><span class="step-text">Works for any type: int, float, double, struct — <strong>the entire struct is written as one chunk</strong></span></li>
+  </ul>
+</div>`+
+codeBlock('Binary Write & Read — struct',`<span class="kw">struct</span> <span class="ty">Student</span> <span class="pu">{</span>
+    <span class="ty">char</span>  <span class="va">name</span><span class="pu">[</span><span class="nu">30</span><span class="pu">];</span>
+    <span class="ty">int</span>   <span class="va">rollNo</span><span class="pu">;</span>
+    <span class="ty">float</span> <span class="va">marks</span><span class="pu">;</span>
+<span class="pu">};</span>
+
+<span class="cm">// BINARY WRITE</span>
+<span class="ty">Student</span> <span class="va">s1</span> <span class="op">=</span> <span class="pu">{</span><span class="st">"Ali Khan"</span><span class="pu">,</span> <span class="nu">101</span><span class="pu">,</span> <span class="nu">91.5f</span><span class="pu">};</span>
+<span class="ty">ofstream</span> <span class="va">fout</span><span class="pu">(</span><span class="st">"students.dat"</span><span class="pu">,</span> <span class="va">ios</span><span class="pu">::</span><span class="va">binary</span><span class="pu">);</span>
+<span class="va">fout</span><span class="pu">.</span><span class="fn">write</span><span class="pu">(</span><span class="kw">reinterpret_cast</span><span class="op">&lt;</span><span class="ty">char</span><span class="op">*&gt;</span><span class="pu">(&amp;</span><span class="va">s1</span><span class="pu">),</span> <span class="kw">sizeof</span><span class="pu">(</span><span class="ty">Student</span><span class="pu">));</span>
+<span class="va">fout</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>
+
+<span class="cm">// BINARY READ</span>
+<span class="ty">Student</span> <span class="va">temp</span><span class="pu">;</span>
+<span class="ty">ifstream</span> <span class="va">fin</span><span class="pu">(</span><span class="st">"students.dat"</span><span class="pu">,</span> <span class="va">ios</span><span class="pu">::</span><span class="va">binary</span><span class="pu">);</span>
+<span class="kw">while</span> <span class="pu">(</span><span class="va">fin</span><span class="pu">.</span><span class="fn">read</span><span class="pu">(</span><span class="kw">reinterpret_cast</span><span class="op">&lt;</span><span class="ty">char</span><span class="op">*&gt;</span><span class="pu">(&amp;</span><span class="va">temp</span><span class="pu">),</span> <span class="kw">sizeof</span><span class="pu">(</span><span class="ty">Student</span><span class="pu">)))</span>
+    <span class="va">cout</span> <span class="op">&lt;&lt;</span> <span class="va">temp</span><span class="pu">.</span><span class="va">name</span> <span class="op">&lt;&lt;</span> <span class="st">" | "</span> <span class="op">&lt;&lt;</span> <span class="va">temp</span><span class="pu">.</span><span class="va">rollNo</span> <span class="op">&lt;&lt;</span> <span class="st">" | "</span> <span class="op">&lt;&lt;</span> <span class="va">temp</span><span class="pu">.</span><span class="va">marks</span> <span class="op">&lt;&lt;</span> <span class="va">endl</span><span class="pu">;</span>
+<span class="va">fin</span><span class="pu">.</span><span class="fn">close</span><span class="pu">();</span>`)+
+`<div class="out-label">🖥️ Output:</div><div class="out-box">Ali Khan | 101 | 91.5</div>
+<div class="box info reveal"><div class="bt">📌 reinterpret_cast&lt;char*&gt;</div><p>Required syntax — don't fear it! It just tells C++: treat this variable's bytes as a char array so write/read can process them. The data itself is not changed.</p></div>`;},
+
+cheat(){return`<span class="pg-badge">Quick Reference</span>
+<h2 class="pg-title">The Golden Cheat Sheet</h2>
+<div class="reading-time">⏱ ~2 min scan</div>
+<p class="pg-lead">Every function, every pattern — all in one place. Print this and keep it handy.</p>
+<div class="tw reveal"><table>
+<tr><th>Task</th><th>Code Pattern</th></tr>
+<tr><td>Include file handling</td><td><code>#include &lt;fstream&gt;</code></td></tr>
+<tr><td>Open for reading</td><td><code>ifstream f("file.txt");</code></td></tr>
+<tr><td>Open for writing</td><td><code>ofstream f("file.txt");</code></td></tr>
+<tr><td>Append to existing</td><td><code>ofstream f("file.txt", ios::app);</code></td></tr>
+<tr><td>Read + Write same file</td><td><code>fstream f("file.txt", ios::in | ios::out);</code></td></tr>
+<tr><td>Binary mode</td><td><code>ifstream f("file.dat", ios::binary);</code></td></tr>
+<tr><td>Check if file opened</td><td><code>if (!f) { handle error }</code></td></tr>
+<tr><td>Write data</td><td><code>f &lt;&lt; data &lt;&lt; endl;</code></td></tr>
+<tr><td>Read word/number</td><td><code>f >> variable;</code></td></tr>
+<tr><td>Read full line (string)</td><td><code>getline(f, str);</code></td></tr>
+<tr><td>Read full line (char[])</td><td><code>f.getline(arr, size);</code></td></tr>
+<tr><td>Read until EOF</td><td><code>while (getline(f, line)) { ... }</code></td></tr>
+<tr><td>Skip leftover newline</td><td><code>f.ignore();</code></td></tr>
+<tr><td>Go to start</td><td><code>f.seekg(0, ios::beg);</code></td></tr>
+<tr><td>Go to end</td><td><code>f.seekg(0, ios::end);</code></td></tr>
+<tr><td>Get file size</td><td><code>f.seekg(0,ios::end); long sz=f.tellg();</code></td></tr>
+<tr><td>Clear error/eof state</td><td><code>f.clear();</code></td></tr>
+<tr><td>Copy file (fast)</td><td><code>dst &lt;&lt; src.rdbuf();</code></td></tr>
+<tr><td>Close file</td><td><code>f.close();</code></td></tr>
+<tr><td>Binary write struct</td><td><code>f.write((char*)&var, sizeof(var));</code></td></tr>
+<tr><td>Binary read struct</td><td><code>f.read((char*)&var, sizeof(var));</code></td></tr>
+<tr><td>Write 1D array</td><td><code>for(i) file &lt;&lt; arr[i] &lt;&lt; endl;</code></td></tr>
+<tr><td>Write 2D array</td><td><code>for(i){for(j) file&lt;&lt;arr[i][j]&lt;&lt;" "; file&lt;&lt;endl;}</code></td></tr>
+</table></div>
+<div class="box tip reveal"><div class="bt">🎓 You Now Know C++ File Handling</div><p>From <code>#include &lt;fstream&gt;</code> to binary structs. Practice writing data, then reading it back. If your read matches your write — you've mastered it!</p></div>`;}
+};
+
+/* ── PAGES LIST ── */
+const pages = [
+  {id:'home',  label:'Home',                   icon:'🏠', ch:''},
+  {id:'ch1',   label:'#include <fstream>',     icon:'📦', ch:'01', keywords:'fstream include header library stream pipe'},
+  {id:'ch2',   label:'Three Stream Classes',   icon:'🌊', ch:'02', keywords:'ifstream ofstream fstream stream class input output read write'},
+  {id:'ch3',   label:'File Modes',             icon:'🚩', ch:'03', keywords:'ios in out app ate trunc binary mode flag open'},
+  {id:'ch4',   label:'File Types & Extensions',icon:'📂', ch:'04', keywords:'txt csv dat bin json log extension type text binary'},
+  {id:'ch5',   label:'Writing Data to File',   icon:'✏️', ch:'05', keywords:'write ofstream cout operator data int float string'},
+  {id:'ch6',   label:'Reading Data from File', icon:'👁️', ch:'06', keywords:'read ifstream cin getline get operator eof line word char'},
+  {id:'ch7',   label:'1D Arrays in Files',     icon:'📊', ch:'07', keywords:'array 1d one dimensional for loop store retrieve'},
+  {id:'ch8',   label:'2D Arrays in Files',     icon:'📐', ch:'08', keywords:'array 2d matrix two dimensional nested loop row column'},
+  {id:'ch9',   label:'Character Arrays',       icon:'🔤', ch:'09', keywords:'char array cstring getline buffer size legacy'},
+  {id:'ch10',  label:'Strings in Files',       icon:'💬', ch:'10', keywords:'string std getline modern dynamic size'},
+  {id:'ch11',  label:'seek · tell · eof',      icon:'🎯', ch:'11', keywords:'seekg seekp tellg tellp eof clear cursor position byte navigate'},
+  {id:'ch12',  label:'Copying File to File',   icon:'📋', ch:'12', keywords:'copy rdbuf line filtered src dst duplicate'},
+  {id:'ch13',  label:'Binary Files',           icon:'⚡', ch:'13', keywords:'binary write read reinterpret_cast struct bytes raw fast compact dat'},
+  {id:'cheat', label:'Cheat Sheet',            icon:'📜', ch:'★', keywords:'reference cheat quick all functions patterns summary'},
+];
+
+/* ── CODE BLOCK HELPER ── */
+function codeBlock(label, code) {
+  const id = 'cb' + Math.random().toString(36).slice(2,7);
+  const lines = code.split('\n');
+  const nums = lines.map((_,i)=>`<span>${i+1}</span>`).join('');
+  return `<div class="cb reveal"><div class="cb-h">
+    <span class="cb-l"><span class="cb-dots"><span class="cb-dot red"></span><span class="cb-dot yellow"></span><span class="cb-dot green"></span></span>${label}</span>
+    <div class="cb-actions"><button class="cb-copy" onclick="copyCode('${id}',this)">copy</button><button class="cb-dl" onclick="dlCode('${id}','${label.replace(/[^a-z0-9]/gi,'_').toLowerCase()}')">⬇ .cpp</button></div>
+  </div><div class="cb-body"><div class="line-nums">${nums}</div><pre id="${id}">${code}</pre></div></div>`;
+}
+
+/* ── SCROLL ANIMATION OBSERVER ── */
+let observer;
+function initObserver() {
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+}
+function observeRevealEls() {
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.reveal, .reveal-left, .reveal-scale').forEach((el, i) => {
+      observer.observe(el);
+    });
+  });
+}
+
+/* ── RENDER ── */
+let current = 0, sbOpen = true;
+
+function renderContent(idx) {
+  const p = pages[idx];
+  const fn = C[p.id];
+  let body = typeof fn === 'function' ? fn() : (C[p.id] || `<span class="pg-badge">Coming Soon</span><h2 class="pg-title">${p.label}</h2><p class="pg-lead">This section is coming soon.</p>`);
+  if (idx === 0) return body;
+  const prev = idx > 0
+    ? `<button class="pg-nav-btn" onclick="goTo(${idx-1})">← ${pages[idx-1].label}</button>`
+    : `<button class="pg-nav-btn" disabled>← Prev</button>`;
+  const next = idx < pages.length - 1
+    ? `<button class="pg-nav-btn" onclick="goTo(${idx+1})">${pages[idx+1].label} →</button>`
+    : `<button class="pg-nav-btn" disabled>Next →</button>`;
+  const info = `<div class="pg-nav-info">Chapter ${idx} of ${pages.length - 2}</div>`;
+  return body + `<div class="pg-nav">${prev}${info}${next}</div>`;
+}
+
+
+/* ── NAVIGATE ── */
+function goTo(idx) {
+  if (idx < 0 || idx >= pages.length) return;
+  current = idx;
+  try { localStorage.setItem('fh_last', idx); } catch(e) {}
+  document.querySelectorAll('.nb-item').forEach((el, i) => el.classList.toggle('active', i === idx));
+  const wrap = document.getElementById('pageWrap');
+  wrap.style.opacity = '0';
+  wrap.style.transform = 'translateY(12px)';
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      wrap.innerHTML = renderContent(idx);
+      wrap.style.transition = 'opacity .32s var(--ease), transform .32s var(--ease)';
+      requestAnimationFrame(() => {
+        wrap.style.opacity = '1';
+        wrap.style.transform = 'none';
+      });
+      observeRevealEls();
+      document.getElementById('contentArea').scrollTop = 0;
+    }, 80);
+  });
+  hideResults();
+  document.getElementById('searchInput').value = '';
+  if (window.innerWidth < 700 && sbOpen) toggleSidebar();
+}
+
+/* ── SIDEBAR ── */
+function buildSidebar() {
+  const nav = document.getElementById('sidebarNav');
+  nav.innerHTML = pages.map((p, i) => {
+    return `<div class="nb-item${i === current ? ' active' : ''}" id="ni${i}" onclick="goTo(${i})">
+      <span class="nb-num">${p.ch}</span>
+      <span class="nb-icon">${p.icon}</span>
+      <span class="nb-label">${p.label}</span>
+    </div>`;
+  }).join('');
+}
+
+function toggleSidebar() {
+  sbOpen = !sbOpen;
+  document.getElementById('sidebar').classList.toggle('closed', !sbOpen);
+  document.getElementById('sbToggle').classList.toggle('active', sbOpen);
+}
+
+
+/* ── SEARCH (full content) ── */
+// Build rich search index with keywords per page
+const searchIndex = pages.slice(1).map((p, i) => ({
+  idx: i + 1,
+  label: p.label,
+  icon: p.icon,
+  ch: p.ch,
+  keywords: (p.label + ' ' + (p.keywords || '')).toLowerCase()
+}));
+
+let searchTimer;
+function onSearch(q) {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => _doSearch(q), 60);
+}
+
+function _doSearch(q) {
+  const trim = q.trim().toLowerCase();
+  const res = document.getElementById('searchResults');
+  if (!trim) { res.innerHTML = ''; res.classList.remove('show'); return; }
+
+  const hits = searchIndex.filter(s => {
+    return s.keywords.includes(trim) || s.ch.toLowerCase().includes(trim);
+  }).slice(0, 8);
+
+  if (!hits.length) {
+    res.innerHTML = `<div class="sr-empty">No results for "<strong>${escHtml(q)}</strong>" — try keywords like <em>seekg</em>, <em>binary</em>, <em>append</em></div>`;
+  } else {
+    res.innerHTML = `<div class="sr-header">${hits.length} result${hits.length>1?'s':''} found</div>` + hits.map(h => {
+      const re = new RegExp(`(${escRe(trim)})`, 'gi');
+      const hl = escHtml(h.label).replace(re, '<mark>$1</mark>');
+      const snippet = getSnippet(h.keywords, trim);
+      return `<div class="sr-item" onclick="goTo(${h.idx});hideResults()">
+        <span class="sr-icon">${h.icon}</span>
+        <div class="sr-body">
+          <div class="sr-label">${hl} <span style="color:var(--dm);font-size:11px;">Ch ${h.ch}</span></div>
+          ${snippet ? `<div class="sr-snippet">${snippet}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+  res.classList.add('show');
+}
+
+function getSnippet(keywords, q) {
+  const idx = keywords.indexOf(q);
+  if (idx === -1) return '';
+  const start = Math.max(0, idx - 20);
+  const end = Math.min(keywords.length, idx + q.length + 40);
+  let snip = (start > 0 ? '…' : '') + keywords.slice(start, end) + (end < keywords.length ? '…' : '');
+  const re = new RegExp(`(${escRe(q)})`, 'gi');
+  return snip.replace(re, '<mark>$1</mark>');
+}
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+function showResults() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (q) _doSearch(q);
+}
+function hideResults() {
+  document.getElementById('searchResults').classList.remove('show');
+}
+document.addEventListener('click', e => {
+  if (!document.querySelector('.search-wrap').contains(e.target)) hideResults();
+});
+
+/* ── CODE UTILITIES ── */
+function copyCode(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.innerText).then(() => {
+    if (btn) {
+      btn.textContent = '✓ copied';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
+    }
+  });
+}
+function dlCode(id, name) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const blob = new Blob([el.innerText], {type:'text/x-c++'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (name || 'code') + '.cpp';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ── SHORTCUTS MODAL ── */
+function showShortcuts() { document.getElementById('shortcutsModal').classList.add('show'); }
+function hideShortcuts(e) {
+  if (!e || e.target === document.getElementById('shortcutsModal'))
+    document.getElementById('shortcutsModal').classList.remove('show');
+}
+
+/* ── SOCIAL ── */
+function isMobile() { return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent); }
+function openLinkedIn(e) {
+  e.preventDefault();
+  const u = 'mustafa-amir-developer';
+  if (isMobile()) {
+    const t = Date.now();
+    window.location.href = 'linkedin://in/' + u;
+    setTimeout(() => { if (Date.now() - t < 1200) window.open('https://linkedin.com/in/' + u, '_blank'); }, 800);
+  } else { window.open('https://linkedin.com/in/' + u, '_blank'); }
+}
+
+/* ── ABOUT POPUP ── */
+function openAbout() {
+  document.getElementById('aboutOverlay').classList.add('show');
+}
+function closeAbout(e) {
+  if (!e || e.target === document.getElementById('aboutOverlay'))
+    document.getElementById('aboutOverlay').classList.remove('show');
+}
+
+/* ── KEYBOARD ── */
+document.addEventListener('keydown', e => {
+  const search = document.getElementById('searchInput');
+  if (e.target === search) {
+    if (e.key === 'Escape') { search.blur(); hideResults(); }
+    return;
+  }
+  if (document.getElementById('shortcutsModal').classList.contains('show')) {
+    if (e.key === 'Escape') hideShortcuts();
+    return;
+  }
+  if (document.getElementById('aboutOverlay').classList.contains('show')) {
+    if (e.key === 'Escape') closeAbout();
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); search.focus(); return; }
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(current + 1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(current - 1);
+  if (e.key === 's' || e.key === 'S') toggleSidebar();
+  if (e.key === 'Escape') closeAbout();
+  if (e.key === '?') showShortcuts();
+});
+
+/* ── INIT ── */
+initObserver();
+buildSidebar();
+let startPage = 0;
+try {
+  const last = parseInt(localStorage.getItem('fh_last') || '0');
+  if (last > 0 && last < pages.length) startPage = last;
+} catch(e) {}
+goTo(startPage);
+</script>
+
+</body>
+</html>
