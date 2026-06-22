@@ -795,8 +795,12 @@ tr:hover td { background:rgba(121,192,255,.05); }
   .home-btn { padding:0 10px; }
   .font-ctrl { display:none; }
   .pg-nav-btn { padding:8px 12px;font-size:10px; }
-  .footer { padding:10px 16px;gap:10px; }
-  .ft-copy { font-size:9px; }
+  .footer { padding:10px 16px;gap:8px; }
+  .ft-copy { font-size:9px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .ft-spacer { display:none; }
+  .ft-about { flex-shrink:0; }
+  .social-row { flex-shrink:0; }
+  .tb-controls { display:none; }
 }
 @media (max-width:480px) {
   .topbar { padding:0 10px;gap:8px; }
