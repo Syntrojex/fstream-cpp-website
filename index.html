@@ -88,7 +88,7 @@ body {
   backdrop-filter:blur(24px) saturate(200%);
   -webkit-backdrop-filter:blur(24px) saturate(200%);
   display:flex; align-items:center;
-  padding:0 16px; gap:12px;
+  padding:env(safe-area-inset-top) 16px 0 16px; gap:12px;
   flex-shrink:0; z-index:200;
   position:relative;
   transition: background .35s;
@@ -110,7 +110,7 @@ body {
   background:var(--search-bg);
   border:1px solid var(--bd);
   border-radius:24px;
-  padding:8px 48px 8px 40px;
+  padding:8px 18px 8px 40px;
   font-family:'Inter',sans-serif;
   font-size:13px; color:var(--tx);
   outline:none;
@@ -124,15 +124,6 @@ body {
   background:var(--sf);
 }
 .search-icon { position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--mu);font-size:14px;pointer-events:none; }
-.search-kbd {
-  position:absolute;right:12px;top:50%;transform:translateY(-50%);
-  font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--dm);
-  background:var(--sf2);border:1px solid var(--bd);border-radius:4px;
-  padding:2px 6px;letter-spacing:.5px;pointer-events:none;
-  transition:opacity .2s;
-}
-.search-input:focus + .search-kbd,
-.search-input:not(:placeholder-shown) + .search-kbd { opacity:0; }
 
 .search-results {
   position:absolute;top:calc(100% + 8px);left:0;right:0;
@@ -198,6 +189,15 @@ body {
   transition:width .32s var(--ease), opacity .28s var(--ease);
 }
 .sidebar.closed { width:0;opacity:0;pointer-events:none; }
+
+.sidebar-backdrop {
+  display:none;
+  position:fixed;inset:0;z-index:170;
+  background:rgba(0,0,0,.55);
+  opacity:0;pointer-events:none;
+  transition:opacity .28s var(--ease);
+}
+.sidebar-backdrop.show { opacity:1;pointer-events:auto; }
 
 .sb-top { padding:18px 16px 12px;border-bottom:1px solid var(--bd2);flex-shrink:0; }
 .sb-title { font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--r);margin-bottom:4px; }
@@ -783,27 +783,47 @@ tr:hover td { background:rgba(121,192,255,.05); }
 /* ── RESPONSIVE ── */
 @media (max-width:900px) { .page-wrap { padding:40px 32px 80px; } .search-wrap { max-width:320px; } }
 @media (max-width:700px) {
-  .sidebar { position:fixed;top:58px;left:0;bottom:74px;z-index:180;width:280px;box-shadow:16px 0 48px rgba(0,0,0,.5); }
+  .sidebar { position:fixed;top:calc(58px + env(safe-area-inset-top));left:0;bottom:calc(74px + env(safe-area-inset-bottom));z-index:180;width:280px;box-shadow:16px 0 48px rgba(0,0,0,.5);padding-left:env(safe-area-inset-left); }
   .sidebar.closed { transform:translateX(-100%);width:280px;opacity:1; }
+  .sidebar-backdrop { display:block; }
   .page-wrap { padding:28px 20px 80px; }
   .g2,.compare-wrap { grid-template-columns:1fr; }
   .g3 { grid-template-columns:1fr 1fr; }
   .search-wrap { max-width:none;flex:1; }
   .tb-logo { display:none; }
   .home-btn span { display:none; }
-  .home-btn { padding:0 10px; }
-  .font-ctrl { display:none; }
+  .home-btn { padding:0 12px;min-height:44px; }
+  .tb-btn, #sbToggle { width:44px;height:44px; }
   .pg-nav-btn { padding:8px 12px;font-size:10px; }
-  .footer { padding:10px 16px;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center; }
+  .footer { padding:10px 16px;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;padding-bottom:calc(10px + env(safe-area-inset-bottom)); }
   .ft-copy { font-size:9px;flex:0 0 100%;text-align:center;white-space:normal;overflow:visible;text-overflow:initial; }
   .ft-spacer { display:none; }
-  .ft-about { flex-shrink:0; }
-  .social-row { flex-shrink:0; }
+  .ft-about { flex-shrink:0;padding:9px 14px;min-height:38px; }
+  .social-row { flex-shrink:0;gap:12px; }
+  .sl { width:44px;height:44px; }
   .tb-controls { display:none; }
+  .search-results { max-height:min(60vh,420px);overflow-y:auto;overflow-x:hidden; }
+  .about-card, .shortcuts-card { max-height:88vh;overflow-y:auto; }
+  .about-x { padding:10px;margin:-10px; }
+  .sc-close { width:38px;height:38px; }
+
+  /* Tables → stacked cards on mobile */
+  .tw { overflow:visible;box-shadow:none;border-radius:0;margin:14px 0; }
+  .tw table, .tw tbody { display:block;width:100%; }
+  .tw tr { display:block;border:1px solid var(--bd);border-radius:10px;margin-bottom:10px;padding:4px 14px;background:var(--card-bg); }
+  .tw tr:last-child { margin-bottom:0; }
+  .tw tr:first-child { display:none; }
+  .tw th { display:none; }
+  .tw td { display:block;width:100%;border-bottom:1px solid var(--bd2);padding:9px 0 9px 40%;position:relative;min-height:20px; }
+  .tw tr td:last-child { border-bottom:none; }
+  .tw td::before {
+    content:attr(data-label);position:absolute;left:0;top:9px;width:36%;
+    font-size:9.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+    color:var(--dm);white-space:normal;line-height:1.4;
+  }
 }
 @media (max-width:480px) {
   .topbar { padding:0 10px;gap:8px; }
-  .tb-btn { width:32px;height:32px; }
   .search-input { font-size:12px;padding:7px 14px 7px 36px; }
   pre { font-size:11.5px;padding:14px 16px; }
   .g3 { grid-template-columns:1fr; }
@@ -833,7 +853,6 @@ tr:hover td { background:rgba(121,192,255,.05); }
       oninput="onSearch(this.value)"
       onfocus="showResults()"
       autocomplete="off">
-    <span class="search-kbd">⌘K</span>
     <div class="search-results" id="searchResults"></div>
   </div>
 
@@ -844,6 +863,7 @@ tr:hover td { background:rgba(121,192,255,.05); }
 
 <!-- WORKSPACE -->
 <div class="workspace">
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
   <aside class="sidebar" id="sidebar">
     <div class="sb-top">
       <div class="sb-title">C++ File Handling</div>
@@ -1004,11 +1024,7 @@ ch2(){return`<span class="pg-badge">Chapter 02</span>
   </div>
 </div>
 
-<div class="tw reveal"><table><tr><th>Class</th><th>Direction</th><th>Default Mode</th><th>Use When</th></tr>
-<tr><td class="to">ifstream</td><td class="tg">File → Program (READ)</td><td><code>ios::in</code></td><td>You want to READ from a file</td></tr>
-<tr><td class="to">ofstream</td><td class="tb">Program → File (WRITE)</td><td><code>ios::out</code></td><td>You want to WRITE into a file</td></tr>
-<tr><td class="to">fstream</td><td class="tr">Both directions</td><td>None (must specify)</td><td>You need READ and WRITE same file</td></tr>
-</table></div>`+
+<div class="tw reveal"><table><tr><th>Class</th><th>Direction</th><th>Default Mode</th><th>Use When</th></tr><tr><td data-label="Class" class="to">ifstream</td><td data-label="Direction" class="tg">File → Program (READ)</td><td data-label="Default Mode"><code>ios::in</code></td><td data-label="Use When">You want to READ from a file</td></tr><tr><td data-label="Class" class="to">ofstream</td><td data-label="Direction" class="tb">Program → File (WRITE)</td><td data-label="Default Mode"><code>ios::out</code></td><td data-label="Use When">You want to WRITE into a file</td></tr><tr><td data-label="Class" class="to">fstream</td><td data-label="Direction" class="tr">Both directions</td><td data-label="Default Mode">None (must specify)</td><td data-label="Use When">You need READ and WRITE same file</td></tr></table></div>`+
 codeBlock('All Three — Usage Examples',`<span class="cm">// ifstream — READ only</span>
 <span class="ty">ifstream</span> <span class="va">fin</span><span class="pu">(</span><span class="st">"data.txt"</span><span class="pu">);</span>
 <span class="kw">if</span> <span class="pu">(!</span><span class="va">fin</span><span class="pu">) {</span> <span class="va">cout</span> <span class="op">&lt;&lt;</span> <span class="st">"Error!"</span><span class="pu">;</span> <span class="kw">return</span> <span class="nu">1</span><span class="pu">; }</span>
@@ -1041,14 +1057,7 @@ ch3(){return`<span class="pg-badge">Chapter 03</span>
   </div>
 </div>
 
-<div class="tw reveal"><table><tr><th>Flag</th><th>Meaning</th><th>Default For</th></tr>
-<tr><td class="to">ios::in</td><td>Open for reading. File must exist.</td><td class="tg">ifstream</td></tr>
-<tr><td class="to">ios::out</td><td>Open for writing. Creates / clears file.</td><td class="tb">ofstream</td></tr>
-<tr><td class="to">ios::app</td><td>Append — add at END. Never erases.</td><td>—</td></tr>
-<tr><td class="to">ios::ate</td><td>Move to end on open. Can write anywhere.</td><td>—</td></tr>
-<tr><td class="to">ios::trunc</td><td>Delete all content when opening.</td><td>—</td></tr>
-<tr><td class="to">ios::binary</td><td>Open in binary mode (raw bytes).</td><td>—</td></tr>
-</table></div>
+<div class="tw reveal"><table><tr><th>Flag</th><th>Meaning</th><th>Default For</th></tr><tr><td data-label="Flag" class="to">ios::in</td><td data-label="Meaning">Open for reading. File must exist.</td><td data-label="Default For" class="tg">ifstream</td></tr><tr><td data-label="Flag" class="to">ios::out</td><td data-label="Meaning">Open for writing. Creates / clears file.</td><td data-label="Default For" class="tb">ofstream</td></tr><tr><td data-label="Flag" class="to">ios::app</td><td data-label="Meaning">Append — add at END. Never erases.</td><td data-label="Default For">—</td></tr><tr><td data-label="Flag" class="to">ios::ate</td><td data-label="Meaning">Move to end on open. Can write anywhere.</td><td data-label="Default For">—</td></tr><tr><td data-label="Flag" class="to">ios::trunc</td><td data-label="Meaning">Delete all content when opening.</td><td data-label="Default For">—</td></tr><tr><td data-label="Flag" class="to">ios::binary</td><td data-label="Meaning">Open in binary mode (raw bytes).</td><td data-label="Default For">—</td></tr></table></div>
 
 <h3 class="sh">Combining Modes with | (OR)</h3>
 
@@ -1103,15 +1112,7 @@ ch4(){return`<span class="pg-badge">Chapter 04</span>
   </div>
 </div>
 
-<div class="tw reveal"><table><tr><th>Extension</th><th>Type</th><th>Mode</th><th>Example</th></tr>
-<tr><td class="to">.txt</td><td>Plain Text</td><td>Default</td><td><code>ifstream f("data.txt");</code></td></tr>
-<tr><td class="to">.csv</td><td>Comma Separated</td><td>Text</td><td><code>ifstream f("records.csv");</code></td></tr>
-<tr><td class="to">.dat</td><td>Data file</td><td>Binary/text</td><td><code>fstream f("save.dat",ios::binary);</code></td></tr>
-<tr><td class="to">.bin</td><td>Binary data</td><td>ios::binary</td><td><code>ofstream f("img.bin",ios::binary);</code></td></tr>
-<tr><td class="to">.cpp</td><td>C++ source</td><td>Text</td><td><code>ifstream f("main.cpp");</code></td></tr>
-<tr><td class="to">.log</td><td>Log files</td><td>ios::app</td><td><code>ofstream f("app.log",ios::app);</code></td></tr>
-<tr><td class="to">.json</td><td>JSON data</td><td>Text</td><td><code>ifstream f("data.json");</code></td></tr>
-</table></div>
+<div class="tw reveal"><table><tr><th>Extension</th><th>Type</th><th>Mode</th><th>Example</th></tr><tr><td data-label="Extension" class="to">.txt</td><td data-label="Type">Plain Text</td><td data-label="Mode">Default</td><td data-label="Example"><code>ifstream f("data.txt");</code></td></tr><tr><td data-label="Extension" class="to">.csv</td><td data-label="Type">Comma Separated</td><td data-label="Mode">Text</td><td data-label="Example"><code>ifstream f("records.csv");</code></td></tr><tr><td data-label="Extension" class="to">.dat</td><td data-label="Type">Data file</td><td data-label="Mode">Binary/text</td><td data-label="Example"><code>fstream f("save.dat",ios::binary);</code></td></tr><tr><td data-label="Extension" class="to">.bin</td><td data-label="Type">Binary data</td><td data-label="Mode">ios::binary</td><td data-label="Example"><code>ofstream f("img.bin",ios::binary);</code></td></tr><tr><td data-label="Extension" class="to">.cpp</td><td data-label="Type">C++ source</td><td data-label="Mode">Text</td><td data-label="Example"><code>ifstream f("main.cpp");</code></td></tr><tr><td data-label="Extension" class="to">.log</td><td data-label="Type">Log files</td><td data-label="Mode">ios::app</td><td data-label="Example"><code>ofstream f("app.log",ios::app);</code></td></tr><tr><td data-label="Extension" class="to">.json</td><td data-label="Type">JSON data</td><td data-label="Mode">Text</td><td data-label="Example"><code>ifstream f("data.json");</code></td></tr></table></div>
 <div class="box info reveal"><div class="bt">📌 Key Insight</div><p>The file extension is just a convention for humans. C++ doesn't care — it will read any file in any mode. <code>.dat</code> files are just text files if you open them without <code>ios::binary</code>!</p></div>`;},
 
 ch5(){return`<span class="pg-badge">Chapter 05</span>
@@ -1327,17 +1328,7 @@ ch11(){return`<span class="pg-badge">Chapter 11</span>
   </div>
 </div>
 
-<div class="tw reveal"><table><tr><th>Function</th><th>Purpose</th></tr>
-<tr><td class="to">seekg(pos)</td><td>Move READ cursor to byte pos from beginning</td></tr>
-<tr><td class="to">seekg(offset, origin)</td><td>Move READ cursor by offset from origin</td></tr>
-<tr><td class="to">seekp(pos)</td><td>Move WRITE cursor to byte pos</td></tr>
-<tr><td class="to">tellg()</td><td>Returns current READ cursor position (bytes from start)</td></tr>
-<tr><td class="to">tellp()</td><td>Returns current WRITE cursor position</td></tr>
-<tr><td class="to">eof()</td><td>Returns true if cursor reached end of file</td></tr>
-<tr><td class="to">ios::beg</td><td>Origin = start of file (byte 0)</td></tr>
-<tr><td class="to">ios::cur</td><td>Origin = current cursor position</td></tr>
-<tr><td class="to">ios::end</td><td>Origin = end of file</td></tr>
-</table></div>`+
+<div class="tw reveal"><table><tr><th>Function</th><th>Purpose</th></tr><tr><td data-label="Function" class="to">seekg(pos)</td><td data-label="Purpose">Move READ cursor to byte pos from beginning</td></tr><tr><td data-label="Function" class="to">seekg(offset, origin)</td><td data-label="Purpose">Move READ cursor by offset from origin</td></tr><tr><td data-label="Function" class="to">seekp(pos)</td><td data-label="Purpose">Move WRITE cursor to byte pos</td></tr><tr><td data-label="Function" class="to">tellg()</td><td data-label="Purpose">Returns current READ cursor position (bytes from start)</td></tr><tr><td data-label="Function" class="to">tellp()</td><td data-label="Purpose">Returns current WRITE cursor position</td></tr><tr><td data-label="Function" class="to">eof()</td><td data-label="Purpose">Returns true if cursor reached end of file</td></tr><tr><td data-label="Function" class="to">ios::beg</td><td data-label="Purpose">Origin = start of file (byte 0)</td></tr><tr><td data-label="Function" class="to">ios::cur</td><td data-label="Purpose">Origin = current cursor position</td></tr><tr><td data-label="Function" class="to">ios::end</td><td data-label="Purpose">Origin = end of file</td></tr></table></div>`+
 codeBlock('seekg, tellg, eof — Complete Example',`<span class="ty">ifstream</span> <span class="va">file</span><span class="pu">(</span><span class="st">"data.txt"</span><span class="pu">);</span>
 
 <span class="cm">// Get file size using seekg + tellg</span>
@@ -1432,10 +1423,7 @@ ch13(){return`<span class="pg-badge">Chapter 13</span>
   </div>
 </div>
 
-<div class="tw reveal"><table><tr><th>Function</th><th>Syntax</th><th>Purpose</th></tr>
-<tr><td class="to">write()</td><td><code>f.write((char*)&var, sizeof(var))</code></td><td>Write raw bytes to file</td></tr>
-<tr><td class="to">read()</td><td><code>f.read((char*)&var, sizeof(var))</code></td><td>Read raw bytes from file</td></tr>
-</table></div>
+<div class="tw reveal"><table><tr><th>Function</th><th>Syntax</th><th>Purpose</th></tr><tr><td data-label="Function" class="to">write()</td><td data-label="Syntax"><code>f.write((char*)&var, sizeof(var))</code></td><td data-label="Purpose">Write raw bytes to file</td></tr><tr><td data-label="Function" class="to">read()</td><td data-label="Syntax"><code>f.read((char*)&var, sizeof(var))</code></td><td data-label="Purpose">Read raw bytes from file</td></tr></table></div>
 
 <div class="concept-panel reveal">
   <div class="concept-label">Binary Files — How reinterpret_cast Works</div>
@@ -1471,32 +1459,7 @@ cheat(){return`<span class="pg-badge">Quick Reference</span>
 <h2 class="pg-title">The Golden Cheat Sheet</h2>
 <div class="reading-time">⏱ ~2 min scan</div>
 <p class="pg-lead">Every function, every pattern — all in one place. Print this and keep it handy.</p>
-<div class="tw reveal"><table>
-<tr><th>Task</th><th>Code Pattern</th></tr>
-<tr><td>Include file handling</td><td><code>#include &lt;fstream&gt;</code></td></tr>
-<tr><td>Open for reading</td><td><code>ifstream f("file.txt");</code></td></tr>
-<tr><td>Open for writing</td><td><code>ofstream f("file.txt");</code></td></tr>
-<tr><td>Append to existing</td><td><code>ofstream f("file.txt", ios::app);</code></td></tr>
-<tr><td>Read + Write same file</td><td><code>fstream f("file.txt", ios::in | ios::out);</code></td></tr>
-<tr><td>Binary mode</td><td><code>ifstream f("file.dat", ios::binary);</code></td></tr>
-<tr><td>Check if file opened</td><td><code>if (!f) { handle error }</code></td></tr>
-<tr><td>Write data</td><td><code>f &lt;&lt; data &lt;&lt; endl;</code></td></tr>
-<tr><td>Read word/number</td><td><code>f >> variable;</code></td></tr>
-<tr><td>Read full line (string)</td><td><code>getline(f, str);</code></td></tr>
-<tr><td>Read full line (char[])</td><td><code>f.getline(arr, size);</code></td></tr>
-<tr><td>Read until EOF</td><td><code>while (getline(f, line)) { ... }</code></td></tr>
-<tr><td>Skip leftover newline</td><td><code>f.ignore();</code></td></tr>
-<tr><td>Go to start</td><td><code>f.seekg(0, ios::beg);</code></td></tr>
-<tr><td>Go to end</td><td><code>f.seekg(0, ios::end);</code></td></tr>
-<tr><td>Get file size</td><td><code>f.seekg(0,ios::end); long sz=f.tellg();</code></td></tr>
-<tr><td>Clear error/eof state</td><td><code>f.clear();</code></td></tr>
-<tr><td>Copy file (fast)</td><td><code>dst &lt;&lt; src.rdbuf();</code></td></tr>
-<tr><td>Close file</td><td><code>f.close();</code></td></tr>
-<tr><td>Binary write struct</td><td><code>f.write((char*)&var, sizeof(var));</code></td></tr>
-<tr><td>Binary read struct</td><td><code>f.read((char*)&var, sizeof(var));</code></td></tr>
-<tr><td>Write 1D array</td><td><code>for(i) file &lt;&lt; arr[i] &lt;&lt; endl;</code></td></tr>
-<tr><td>Write 2D array</td><td><code>for(i){for(j) file&lt;&lt;arr[i][j]&lt;&lt;" "; file&lt;&lt;endl;}</code></td></tr>
-</table></div>
+<div class="tw reveal"><table><tr><th>Task</th><th>Code Pattern</th></tr><tr><td data-label="Task">Include file handling</td><td data-label="Code Pattern"><code>#include &lt;fstream&gt;</code></td></tr><tr><td data-label="Task">Open for reading</td><td data-label="Code Pattern"><code>ifstream f("file.txt");</code></td></tr><tr><td data-label="Task">Open for writing</td><td data-label="Code Pattern"><code>ofstream f("file.txt");</code></td></tr><tr><td data-label="Task">Append to existing</td><td data-label="Code Pattern"><code>ofstream f("file.txt", ios::app);</code></td></tr><tr><td data-label="Task">Read + Write same file</td><td data-label="Code Pattern"><code>fstream f("file.txt", ios::in | ios::out);</code></td></tr><tr><td data-label="Task">Binary mode</td><td data-label="Code Pattern"><code>ifstream f("file.dat", ios::binary);</code></td></tr><tr><td data-label="Task">Check if file opened</td><td data-label="Code Pattern"><code>if (!f) { handle error }</code></td></tr><tr><td data-label="Task">Write data</td><td data-label="Code Pattern"><code>f &lt;&lt; data &lt;&lt; endl;</code></td></tr><tr><td data-label="Task">Read word/number</td><td data-label="Code Pattern"><code>f >> variable;</code></td></tr><tr><td data-label="Task">Read full line (string)</td><td data-label="Code Pattern"><code>getline(f, str);</code></td></tr><tr><td data-label="Task">Read full line (char[])</td><td data-label="Code Pattern"><code>f.getline(arr, size);</code></td></tr><tr><td data-label="Task">Read until EOF</td><td data-label="Code Pattern"><code>while (getline(f, line)) { ... }</code></td></tr><tr><td data-label="Task">Skip leftover newline</td><td data-label="Code Pattern"><code>f.ignore();</code></td></tr><tr><td data-label="Task">Go to start</td><td data-label="Code Pattern"><code>f.seekg(0, ios::beg);</code></td></tr><tr><td data-label="Task">Go to end</td><td data-label="Code Pattern"><code>f.seekg(0, ios::end);</code></td></tr><tr><td data-label="Task">Get file size</td><td data-label="Code Pattern"><code>f.seekg(0,ios::end); long sz=f.tellg();</code></td></tr><tr><td data-label="Task">Clear error/eof state</td><td data-label="Code Pattern"><code>f.clear();</code></td></tr><tr><td data-label="Task">Copy file (fast)</td><td data-label="Code Pattern"><code>dst &lt;&lt; src.rdbuf();</code></td></tr><tr><td data-label="Task">Close file</td><td data-label="Code Pattern"><code>f.close();</code></td></tr><tr><td data-label="Task">Binary write struct</td><td data-label="Code Pattern"><code>f.write((char*)&var, sizeof(var));</code></td></tr><tr><td data-label="Task">Binary read struct</td><td data-label="Code Pattern"><code>f.read((char*)&var, sizeof(var));</code></td></tr><tr><td data-label="Task">Write 1D array</td><td data-label="Code Pattern"><code>for(i) file &lt;&lt; arr[i] &lt;&lt; endl;</code></td></tr><tr><td data-label="Task">Write 2D array</td><td data-label="Code Pattern"><code>for(i){for(j) file&lt;&lt;arr[i][j]&lt;&lt;" "; file&lt;&lt;endl;}</code></td></tr></table></div>
 <div class="box tip reveal"><div class="bt">🎓 You Now Know C++ File Handling</div><p>From <code>#include &lt;fstream&gt;</code> to binary structs. Practice writing data, then reading it back. If your read matches your write — you've mastered it!</p></div>`;}
 };
 
@@ -1611,6 +1574,7 @@ function toggleSidebar() {
   sbOpen = !sbOpen;
   document.getElementById('sidebar').classList.toggle('closed', !sbOpen);
   document.getElementById('sbToggle').classList.toggle('active', sbOpen);
+  document.getElementById('sidebarBackdrop').classList.toggle('show', sbOpen);
 }
 
 
@@ -1715,7 +1679,7 @@ function hideShortcuts(e) {
 function isMobile() { return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent); }
 function openLinkedIn(e) {
   e.preventDefault();
-  const u = 'mustafa-amir-developer';
+  const u = 'mustafa-amir-syntrojex';
   if (isMobile()) {
     const t = Date.now();
     window.location.href = 'linkedin://in/' + u;
