@@ -91,9 +91,9 @@ No install. No setup. No dependencies.
 git clone https://github.com/Syntrojex/fstream-cpp-website.git
 
 # Open in browser
-open cpp-guide.html
+open index.html
 ```
 
-Or just open `cpp-guide.html` directly in any browser. ✅
+Or just open `index.html` directly in any browser. ✅
 
 ---
