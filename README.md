@@ -81,3 +81,19 @@ fstream-website/
 └── favicon.png       ← raster icon
 
 ---
+
+## 🚀 Getting Started
+
+No install. No setup. No dependencies.
+
+```bash
+# Clone the repo
+git clone https://github.com/Syntrojex/file-handling-guide.git
+
+# Open in browser
+open cpp-guide.html
+```
+
+Or just open `cpp-guide.html` directly in any browser. ✅
+
+---
