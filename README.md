@@ -18,3 +18,13 @@
 </div>
 
 ---
+
+## ✨ What is This?
+
+A **fully interactive, beautifully designed** reference guide for **C++ File Handling** — built as a single-page web application.
+
+No frameworks. No libraries. Pure **HTML, CSS and JavaScript** — fast, offline-capable, and gorgeous.
+
+> *Written clearly for beginners. Detailed enough for professionals.*
+
+---
