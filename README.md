@@ -100,3 +100,11 @@ https://fstream-dev.vercel.app
 Or just open `index.html` directly in any browser. ✅
 
 ---
+
+## 📸 Preview
+
+| Dark Mode | Light Mode |
+|-----------|------------|
+| Dark cyber theme | Clean minimal theme |
+
+---
