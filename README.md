@@ -88,7 +88,7 @@ No install. No setup. No dependencies.
 
 ```bash
 # Clone the repo
-git clone https://github.com/Syntrojex/file-handling-guide.git
+git clone https://github.com/Syntrojex/fstream-cpp-website.git
 
 # Open in browser
 open cpp-guide.html
