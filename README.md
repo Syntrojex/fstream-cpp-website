@@ -92,6 +92,9 @@ git clone https://github.com/Syntrojex/fstream-cpp-website.git
 
 # Open in browser
 open index.html
+
+# Or directly visit
+https://fstream-dev.vercel.app
 ```
 
 Or just open `index.html` directly in any browser. ✅
