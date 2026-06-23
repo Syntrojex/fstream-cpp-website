@@ -49,3 +49,24 @@ No frameworks. No libraries. Pure **HTML, CSS and JavaScript** — fast, offline
 | 14 | **The Golden Cheat Sheet** | Everything on one page |
 
 ---
+
+## 🎨 Features
+✔  Sidebar navigation — jump to any topic instantly
+
+✔  Dark / Light theme toggle
+
+✔  Keyboard shortcuts
+
+✔  Search — topics, keywords, functions
+
+✔  Syntax highlighted code blocks
+
+✔  Visual diagrams — Stream Flow, concept maps
+
+✔  Animated background
+
+✔  Fully responsive
+
+✔  Zero dependencies — single HTML file
+
+---
