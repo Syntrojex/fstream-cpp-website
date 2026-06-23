@@ -108,3 +108,11 @@ Or just open `index.html` directly in any browser. ✅
 | Dark cyber theme | Clean minimal theme |
 
 ---
+
+<div align="center">
+
+Made with ❤️ by [Syntrojex](https://github.com/Syntrojex)
+
+*If this helped you — drop a ⭐*
+
+</div>
