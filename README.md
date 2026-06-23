@@ -70,3 +70,14 @@ No frameworks. No libraries. Pure **HTML, CSS and JavaScript** — fast, offline
 ✔  Zero dependencies — single HTML file
 
 ---
+
+## 📁 Project Structure
+fstream-website/
+
+├── cpp-guide.html    ← entire app — one file
+
+├── favicon.svg       ← vector icon
+
+└── favicon.png       ← raster icon
+
+---
