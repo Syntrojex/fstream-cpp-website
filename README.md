@@ -28,3 +28,24 @@ No frameworks. No libraries. Pure **HTML, CSS and JavaScript** — fast, offline
 > *Written clearly for beginners. Detailed enough for professionals.*
 
 ---
+
+## 🗂️ Topics Covered
+
+| # | Topic | What You Learn |
+|---|-------|----------------|
+| 01 | **The Header** | `#include <fstream>` — what it gives you and why |
+| 02 | **Stream Classes** | `ifstream` vs `ofstream` vs `fstream` |
+| 03 | **File Modes** | `ios` flags — append, binary, truncate and more |
+| 04 | **File Types & Extensions** | `.txt`, `.bin`, `.csv` and when to use each |
+| 05 | **Writing Data** | Put data into files immediately |
+| 06 | **Reading Data** | Extract data cleanly and safely |
+| 07 | **1D Arrays in Files** | Store and retrieve arrays |
+| 08 | **2D Arrays in Files** | Matrix data persistence |
+| 09 | **Character Arrays & getline()** | C-string file operations |
+| 10 | **std::string in Files** | Modern string file handling |
+| 11 | **File Control** | `seek` · `tell` · `eof` — navigate inside any file |
+| 12 | **Copying File to File** | Efficient file duplication |
+| 13 | **Binary Files** | Raw bytes — fast, compact, powerful |
+| 14 | **The Golden Cheat Sheet** | Everything on one page |
+
+---
