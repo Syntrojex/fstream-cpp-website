@@ -107,7 +107,7 @@ Or just open `index.html` directly in any browser. ✅
 
 | Dark Mode | Light Mode |
 |-----------|------------|
-| Dark cyber theme | Clean minimal theme |
+| ![Dark Theme](./dark-theme.png) | ![Light Theme](./white-theme.png) |
 
 ---
 
