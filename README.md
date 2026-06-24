@@ -1,4 +1,4 @@
-<div align="center">
+<div align="center"> 
 
 <img src="favicon.svg" width="80" alt="fstream logo"/>
 
