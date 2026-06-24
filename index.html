@@ -53,10 +53,11 @@ html, body { height:100%; overflow:hidden; }
 body {
   background: var(--bg);
   color: var(--tx);
+  transition: background .15s ease, color .15s ease;
   font-family: 'Inter', sans-serif;
   font-size: 15px;
   line-height: 1.7;
-  transition: background .35s var(--ease), color .35s var(--ease);
+  transition: background .15s ease, color .15s ease;
   display: flex;
   flex-direction: column;
 }
@@ -98,7 +99,7 @@ body {
   padding:env(safe-area-inset-top) 16px 0 16px; gap:12px;
   flex-shrink:0; z-index:200;
   position:relative;
-  transition: background .35s;
+  transition: background .15s;
 }
 .tb-logo {
   font-family:'JetBrains Mono',monospace;
@@ -241,7 +242,7 @@ body {
 /* ── CONTENT ── */
 .content {
   flex:1;overflow-y:auto;background:var(--bg2);
-  transition:background .35s var(--ease);
+  transition:background .15s;
 }
 .content::-webkit-scrollbar { width:6px; }
 .content::-webkit-scrollbar-thumb { background:var(--bd);border-radius:3px; }
@@ -386,7 +387,7 @@ code {
   font-family:'JetBrains Mono',monospace;font-size:12.5px;
   background:var(--sf2);border:1px solid var(--bd);padding:2px 7px;
   border-radius:4px;color:var(--y);
-  transition:background .3s,border-color .3s;
+  transition:background .15s,border-color .15s;
 }
 
 /* ── VISUAL CONCEPT CARDS (ChatGPT style) ── */
@@ -873,6 +874,7 @@ tr:hover td { background:rgba(121,192,255,.05); }
   </div>
 
   <div class="tb-controls">
+    <button class="tb-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle Theme (T)">🌙</button>
     <button class="tb-btn" onclick="showShortcuts()" title="Keyboard shortcuts">⌨</button>
   </div>
 </div>
@@ -1771,12 +1773,48 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(current + 1);
   if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(current - 1);
   if (e.key === 's' || e.key === 'S') toggleSidebar();
+  if (e.key === 't' || e.key === 'T') toggleTheme();
   if (e.key === 'Escape') closeAbout();
   if (e.key === '?') showShortcuts();
 });
 
 /* ── INIT ── */
 initObserver();
+// Theme toggle — instant, no stagger
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  // Kill all transitions instantly
+  const style = document.createElement('style');
+  style.id = 'no-trans';
+  style.textContent = '*,*::before,*::after{transition:none!important;}';
+  document.head.appendChild(style);
+  // Apply theme
+  html.setAttribute('data-theme', next);
+  document.getElementById('themeToggle').textContent = next === 'dark' ? '🌙' : '☀️';
+  // Re-enable transitions after paint
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const el = document.getElementById('no-trans');
+      if (el) el.remove();
+    });
+  });
+  try { localStorage.setItem('fh_theme', next); } catch(e) {}
+}
+
+// Init theme from localStorage
+(function() {
+  try {
+    const saved = localStorage.getItem('fh_theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+      const btn = document.getElementById('themeToggle');
+      if (btn) btn.textContent = saved === 'dark' ? '🌙' : '☀️';
+    }
+  } catch(e) {}
+})();
+
 buildSidebar();
 let startPage = 0;
 try {
