@@ -75,9 +75,11 @@ No frameworks. No libraries. Pure **HTML, CSS and JavaScript** — fast, offline
 
 ```
 file-handling-guide/
-├── index.html    ← entire app — HTML + CSS + JS in one file
-├── favicon.svg       ← vector icon
-└── favicon.png       ← raster icon
+├── index.html       ← entire app — HTML + CSS + JS in one file
+├── dark-theme.png   ← dark mode preview screenshot
+├── white-theme.png  ← light mode preview screenshot
+├── favicon.svg      ← vector icon
+└── favicon.png      ← raster icon
 ```
 
 ---
