@@ -1554,7 +1554,7 @@ function renderContent(idx) {
 function goTo(idx) {
   if (idx < 0 || idx >= pages.length) return;
   current = idx;
-  try { localStorage.setItem('fh_last', idx); } catch(e) {}
+  // Chapter position intentionally NOT saved — always opens from home on refresh
   document.querySelectorAll('.nb-item').forEach((el, i) => el.classList.toggle('active', i === idx));
   const wrap = document.getElementById('pageWrap');
   wrap.style.opacity = '0';
@@ -1816,12 +1816,8 @@ function toggleTheme() {
 })();
 
 buildSidebar();
-let startPage = 0;
-try {
-  const last = parseInt(localStorage.getItem('fh_last') || '0');
-  if (last > 0 && last < pages.length) startPage = last;
-} catch(e) {}
-goTo(startPage);
+// Always start from home page (chapter 0) on every visit/refresh
+goTo(0);
 </script>
 
 </body>
