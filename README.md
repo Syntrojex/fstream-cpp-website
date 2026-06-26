@@ -1,4 +1,4 @@
-<div align="center">
+<div align="center"> 
 
 <img src="favicon.svg" width="80" alt="fstream logo"/>
 
@@ -75,9 +75,11 @@ No frameworks. No libraries. Pure **HTML, CSS and JavaScript** — fast, offline
 
 ```
 file-handling-guide/
-├── index.html    ← entire app — HTML + CSS + JS in one file
-├── favicon.svg       ← vector icon
-└── favicon.png       ← raster icon
+├── index.html       ← entire app — HTML + CSS + JS in one file
+├── dark-theme.png   ← dark mode preview screenshot
+├── white-theme.png  ← light mode preview screenshot
+├── favicon.svg      ← vector icon
+└── favicon.png      ← raster icon
 ```
 
 ---
@@ -105,7 +107,7 @@ Or just open `index.html` directly in any browser. ✅
 
 | Dark Mode | Light Mode |
 |-----------|------------|
-| Dark cyber theme | Clean minimal theme |
+| ![Dark Theme](./dark-theme.png) | ![Light Theme](./white-theme.png) |
 
 ---
 
