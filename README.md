@@ -13,7 +13,7 @@
 ![](https://img.shields.io/badge/Built%20With-HTML%20%7C%20CSS%20%7C%20JS-f0db4f?style=for-the-badge)
 ![](https://img.shields.io/badge/Theme-Dark%20%7C%20Light-0ea5e9?style=for-the-badge)
 
-**[🚀 Live Demo](https://fstream.vercel.app)** · **[📖 View Guide](https://github.com/Syntrojex/fstream-cpp-website)** · **[⭐ Star this repo](https://github.com/Syntrojex/fstream-cpp-website)**
+**[🚀 Live Demo](https://fstream-dev.vercel.app)** · **[📖 View Guide](https://github.com/Syntrojex/fstream-cpp-website)** · **[⭐ Star this repo](https://github.com/Syntrojex/fstream-cpp-website)**
 
 </div>
 
