@@ -399,6 +399,25 @@ code {
   transition:background .15s,border-color .15s;
 }
 
+/* ── BEGINNER-FRIENDLY SUMMARY BOX ──
+   Purely additive: appears right under the chapter's intro line, in plain
+   everyday language, before the technical content begins. Original content
+   below it is completely unchanged. */
+.beginner-box {
+  background: rgba(86,211,100,.05);
+  border: 1px dashed rgba(86,211,100,.35);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 0 0 26px;
+}
+.beginner-box .bb-label {
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--g);margin-bottom:6px;
+  display:flex;align-items:center;gap:6px;
+}
+.beginner-box .bb-label::before { content:'🧒'; }
+.beginner-box p { margin:0; font-size:13.5px; color:var(--tx2); line-height:1.7; }
+
 /* ── VISUAL CONCEPT CARDS (ChatGPT style) ── */
 .concept-panel {
   background:linear-gradient(135deg,rgba(121,192,255,.04),rgba(210,168,255,.04));
@@ -816,6 +835,9 @@ tr:hover td { background:rgba(121,192,255,.05); }
   .home-btn span { display:none; }
   .home-btn { padding:0 12px;min-height:44px; }
   .tb-btn, #sbToggle { width:44px;height:44px; }
+  /* FIX: on mobile, drop the Keyboard Shortcuts button (not useful without
+     a keyboard) — the Theme toggle stays visible in its place. */
+  #shortcutsBtn { display:none; }
   .pg-nav-btn { padding:8px 12px;font-size:10px; }
   .footer { padding:10px 16px;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;padding-bottom:calc(10px + env(safe-area-inset-bottom)); }
   .ft-copy { font-size:9px;flex:0 0 100%;text-align:center;white-space:normal;overflow:visible;text-overflow:initial; }
@@ -882,7 +904,7 @@ tr:hover td { background:rgba(121,192,255,.05); }
 
   <div class="tb-controls">
     <button class="tb-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle Theme (T)">🌙</button>
-    <button class="tb-btn" onclick="showShortcuts()" title="Keyboard shortcuts">⌨</button>
+    <button class="tb-btn" id="shortcutsBtn" onclick="showShortcuts()" title="Keyboard shortcuts">⌨</button>
   </div>
 </div>
 
@@ -986,6 +1008,8 @@ ch1(){return`<span class="pg-badge">Chapter 01</span>
 <div class="reading-time">⏱ ~3 min read</div>
 <p class="pg-lead">Before you can talk to a file, you must include the library that gives C++ the power to do so.</p>
 
+<div class="beginner-box"><div class="bb-label">In Simple Words</div><p>Normally your C++ program can only talk to the screen (cout) and keyboard (cin). Writing <code>#include &lt;fstream&gt;</code> at the top is like plugging in a new cable — it unlocks the ability to also talk to files saved on your computer.</p></div>
+
 <div class="concept-panel reveal">
   <div class="concept-label">How File I/O Works — Step by Step</div>
   <ul class="step-list">
@@ -1024,6 +1048,8 @@ ch2(){return`<span class="pg-badge">Chapter 02</span>
 <h2 class="pg-title">The Three Stream Classes</h2>
 <div class="reading-time">⏱ ~4 min read</div>
 <p class="pg-lead">Three tools. Each has one job. Know which one to use when.</p>
+
+<div class="beginner-box"><div class="bb-label">In Simple Words</div><p>Think of it like choosing between a mailbox that only receives letters, one that only sends letters, or one that does both. <code>ifstream</code> only reads, <code>ofstream</code> only writes, <code>fstream</code> does both — pick whichever matches what your program needs to do.</p></div>
 
 <div class="diagram reveal">
   <div class="diagram-title">Stream Class Comparison</div>
@@ -1069,6 +1095,8 @@ ch3(){return`<span class="pg-badge">Chapter 03</span>
 <h2 class="pg-title">File Modes — ios Flags</h2>
 <div class="reading-time">⏱ ~4 min read</div>
 <p class="pg-lead">File modes tell C++ HOW to open a file — read, write, append, binary, or combinations.</p>
+
+<div class="beginner-box"><div class="bb-label">In Simple Words</div><p>Opening a file is like opening a notebook. Do you want to just read what's written (<code>ios::in</code>), erase it and write fresh (<code>ios::out</code>), or add new lines at the end without erasing (<code>ios::app</code>)? The "mode" is simply telling C++ what you plan to do with the notebook.</p></div>
 
 <div class="diagram reveal">
   <div class="diagram-title">Mode Flags Visual Reference</div>
@@ -1118,6 +1146,8 @@ ch4(){return`<span class="pg-badge">Chapter 04</span>
 <div class="reading-time">⏱ ~3 min read</div>
 <p class="pg-lead">C++ can work with almost any file type. The extension is just a name — what matters is how you open it.</p>
 
+<div class="beginner-box"><div class="bb-label">In Simple Words</div><p>A file's name like <code>data.txt</code> or <code>save.dat</code> is just a label for humans — C++ doesn't actually care what you name it. What really matters is whether you open it as text (readable words) or binary (raw computer data).</p></div>
+
 <div class="compare-wrap reveal">
   <div class="compare-col col-a">
     <div class="compare-header">📝 Text Mode (Default)</div>
@@ -1144,6 +1174,8 @@ ch5(){return`<span class="pg-badge">Chapter 05</span>
 <h2 class="pg-title">Writing Data to a File</h2>
 <div class="reading-time">⏱ ~5 min read</div>
 <p class="pg-lead">Writing to a file works exactly like cout — use &lt;&lt; to push data in.</p>
+
+<div class="beginner-box"><div class="bb-label">In Simple Words</div><p>If you already know <code>cout &lt;&lt; "Hello";</code>, you basically already know this! Just replace <code>cout</code> with your file variable, and instead of printing on screen, it gets saved into the file.</p></div>
 
 <div class="concept-panel reveal">
   <div class="concept-label">Writing — Mental Model</div>
@@ -1186,6 +1218,8 @@ ch6(){return`<span class="pg-badge">Chapter 06</span>
 <h2 class="pg-title">Reading Data from a File</h2>
 <div class="reading-time">⏱ ~5 min read</div>
 <p class="pg-lead">Reading works just like cin — use &gt;&gt; for words/numbers, getline() for full lines.</p>
+
+<div class="beginner-box"><div class="bb-label">In Simple Words</div><p>Just like <code>cin &gt;&gt; x;</code> reads what you type on the keyboard, <code>file &gt;&gt; x;</code> reads what's written inside the file — one word or number at a time. If you want a whole sentence at once (with spaces), use <code>getline()</code> instead.</p></div>
 
 <div class="diagram reveal">
   <div class="diagram-title">Reading Methods — Which One to Use?</div>
@@ -1233,7 +1267,8 @@ codeBlock('Character by Character',`<span class="ty">ifstream</span> <span class
 ch7(){return`<span class="pg-badge">Chapter 07</span>
 <h2 class="pg-title">1D Arrays in Files</h2>
 <div class="reading-time">⏱ ~4 min read</div>
-<p class="pg-lead">Store and retrieve arrays — row by row, one element per line.</p>`+
+<p class="pg-lead">Store and retrieve arrays — row by row, one element per line.</p>
+<div class="beginner-box"><div class="bb-label">In Simple Words</div><p>You already know how to loop through an array with <code>for</code>. Saving it to a file is the exact same loop — just write each element to the file instead of printing it to the screen.</p></div>`+
 codeBlock('Write 1D Array to File',`<span class="ty">int</span> <span class="va">arr</span><span class="pu">[] = {</span><span class="nu">10</span><span class="pu">,</span><span class="nu">20</span><span class="pu">,</span><span class="nu">30</span><span class="pu">,</span><span class="nu">40</span><span class="pu">,</span><span class="nu">50</span><span class="pu">};</span>
 <span class="ty">ofstream</span> <span class="va">file</span><span class="pu">(</span><span class="st">"array1d.txt"</span><span class="pu">);</span>
 <span class="kw">for</span> <span class="pu">(</span><span class="ty">int</span> <span class="va">i</span><span class="op">=</span><span class="nu">0</span><span class="pu">;</span> <span class="va">i</span><span class="op">&lt;</span><span class="nu">5</span><span class="pu">;</span> <span class="va">i</span><span class="op">++</span><span class="pu">)</span>
@@ -1256,7 +1291,8 @@ codeBlock('Read 1D Array Back',`<span class="ty">int</span> <span class="va">arr
 ch8(){return`<span class="pg-badge">Chapter 08</span>
 <h2 class="pg-title">2D Arrays in Files</h2>
 <div class="reading-time">⏱ ~4 min read</div>
-<p class="pg-lead">Row-by-row writing and reading — same pattern, one extra loop.</p>`+
+<p class="pg-lead">Row-by-row writing and reading — same pattern, one extra loop.</p>
+<div class="beginner-box"><div class="bb-label">In Simple Words</div><p>A 2D array is just a grid (like a mini spreadsheet). To save it, you use two loops — one for rows, one for columns — same idea as printing a grid to the screen, just writing to a file instead.</p></div>`+
 codeBlock('Write & Read 2D Array',`<span class="cm">// WRITE 3x3 matrix</span>
 <span class="ty">int</span> <span class="va">mat</span><span class="pu">[</span><span class="nu">3</span><span class="pu">][</span><span class="nu">3</span><span class="pu">] = {{</span><span class="nu">1</span><span class="pu">,</span><span class="nu">2</span><span class="pu">,</span><span class="nu">3</span><span class="pu">},{</span><span class="nu">4</span><span class="pu">,</span><span class="nu">5</span><span class="pu">,</span><span class="nu">6</span><span class="pu">},{</span><span class="nu">7</span><span class="pu">,</span><span class="nu">8</span><span class="pu">,</span><span class="nu">9</span><span class="pu">}};</span>
 <span class="ty">ofstream</span> <span class="va">fout</span><span class="pu">(</span><span class="st">"matrix.txt"</span><span class="pu">);</span>
@@ -1280,7 +1316,8 @@ codeBlock('Write & Read 2D Array',`<span class="cm">// WRITE 3x3 matrix</span>
 ch9(){return`<span class="pg-badge">Chapter 09</span>
 <h2 class="pg-title">Character Arrays &amp; getline()</h2>
 <div class="reading-time">⏱ ~3 min read</div>
-<p class="pg-lead">Char arrays (C-strings) need getline with a size limit. std::string is almost always better.</p>`+
+<p class="pg-lead">Char arrays (C-strings) need getline with a size limit. std::string is almost always better.</p>
+<div class="beginner-box"><div class="bb-label">In Simple Words</div><p>A char array is an old-style, fixed-size box for storing text — you must tell it the maximum size in advance so it doesn't overflow. Later you'll see std::string, which is a more modern and safer way to do the same thing.</p></div>`+
 codeBlock('Char Array — Write & Read',`<span class="cm">// WRITE char array</span>
 <span class="ty">char</span> <span class="va">name</span><span class="pu">[] =</span> <span class="st">"Muhammad Mustafa Amir"</span><span class="pu">;</span>
 <span class="ty">ofstream</span> <span class="va">fout</span><span class="pu">(</span><span class="st">"name.txt"</span><span class="pu">);</span>
@@ -1297,7 +1334,8 @@ codeBlock('Char Array — Write & Read',`<span class="cm">// WRITE char array</s
 ch10(){return`<span class="pg-badge">Chapter 10</span>
 <h2 class="pg-title">std::string in Files</h2>
 <div class="reading-time">⏱ ~3 min read</div>
-<p class="pg-lead">std::string is the modern way — dynamic size, no buffer limits, clean syntax.</p>`+
+<p class="pg-lead">std::string is the modern way — dynamic size, no buffer limits, clean syntax.</p>
+<div class="beginner-box"><div class="bb-label">In Simple Words</div><p>Unlike char arrays, std::string automatically grows to fit whatever text you give it — no need to guess a size in advance. For beginners, this is the safer and easier choice almost every time.</p></div>`+
 codeBlock('std::string — Write & Read Lines',`<span class="mc">#include</span> <span class="st">&lt;string&gt;</span>
 <span class="cm">// WRITE multiple strings</span>
 <span class="ty">ofstream</span> <span class="va">fout</span><span class="pu">(</span><span class="st">"strings.txt"</span><span class="pu">);</span>
@@ -1331,6 +1369,8 @@ ch11(){return`<span class="pg-badge">Chapter 11</span>
 <h2 class="pg-title">File Control<br>seek · tell · eof</h2>
 <div class="reading-time">⏱ ~5 min read</div>
 <p class="pg-lead">Move around inside a file like a cursor. Jump to any byte position instantly.</p>
+
+<div class="beginner-box"><div class="bb-label">In Simple Words</div><p>Imagine a file is a long line of text and there's an invisible cursor blinking somewhere in it (just like in a text editor). <code>seekg()</code> moves that cursor to a specific spot, and <code>tellg()</code> tells you exactly where it currently is.</p></div>
 
 <div class="diagram reveal">
   <div class="diagram-title">File Pointer — How it Works</div>
@@ -1378,6 +1418,8 @@ ch12(){return`<span class="pg-badge">Chapter 12</span>
 <div class="reading-time">⏱ ~3 min read</div>
 <p class="pg-lead">Read from one file, write directly into another — three methods.</p>
 
+<div class="beginner-box"><div class="bb-label">In Simple Words</div><p>This is exactly like copy-pasting the contents of one Notepad file into another — just done automatically by your program instead of you doing it by hand.</p></div>
+
 <div class="g3 reveal">
   <div class="gc" style="border-color:rgba(86,211,100,.2);">
     <div class="gc-icon">⚡</div>
@@ -1423,6 +1465,8 @@ ch13(){return`<span class="pg-badge">Chapter 13</span>
 <h2 class="pg-title">Binary Files</h2>
 <div class="reading-time">⏱ ~6 min read</div>
 <p class="pg-lead">Raw bytes — faster, smaller, exact. The foundation of game saves and databases.</p>
+
+<div class="beginner-box"><div class="bb-label">In Simple Words</div><p>Text mode saves numbers as readable characters (slow, but you can open the file in Notepad). Binary mode saves the exact same numbers as raw computer bytes (fast and compact, but looks like gibberish if you open it in Notepad). Games and apps use binary mode for save files because it's quicker.</p></div>
 
 <div class="compare-wrap reveal">
   <div class="compare-col col-a">
