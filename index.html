@@ -144,6 +144,14 @@ body {
 }
 .search-results.show { display:block; }
 @keyframes dropIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:none} }
+/* FIX #5: themed scrollbar for the search results dropdown — previously
+   this used the default browser scrollbar (always grey/white), which
+   clashed with the dark theme. Now it matches .content / .sb-scroll. */
+.search-results { scrollbar-width:thin; scrollbar-color:var(--bd) transparent; }
+.search-results::-webkit-scrollbar { width:5px; }
+.search-results::-webkit-scrollbar-track { background:transparent; }
+.search-results::-webkit-scrollbar-thumb { background:var(--bd); border-radius:3px; }
+.search-results::-webkit-scrollbar-thumb:hover { background:var(--dm); }
 .sr-header { padding:8px 14px 4px; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--dm); }
 .sr-item {
   display:flex; align-items:flex-start; gap:10px;
@@ -173,7 +181,6 @@ body {
 }
 .tb-btn:hover { background:var(--sf2);color:var(--tx);border-color:var(--r);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.15); }
 .tb-btn.active { background:rgba(247,129,102,.12);color:var(--r);border-color:rgba(247,129,102,.4); }
-.tb-btn title-attr { display:none; }
 
 
 .home-btn {
@@ -198,6 +205,7 @@ body {
   transition:width .32s var(--ease), opacity .28s var(--ease);
 }
 .sidebar.closed { width:0;opacity:0;pointer-events:none; }
+.sidebar.no-anim { transition:none !important; }
 
 .sidebar-backdrop {
   display:none;
@@ -815,7 +823,6 @@ tr:hover td { background:rgba(121,192,255,.05); }
   .ft-about { flex-shrink:0;padding:9px 14px;min-height:38px; }
   .social-row { flex-shrink:0;gap:12px; }
   .sl { width:44px;height:44px; }
-  .tb-controls { display:none; }
   .search-results { max-height:min(60vh,420px);overflow-y:auto;overflow-x:hidden; }
   .about-card, .shortcuts-card { max-height:88vh;overflow-y:auto; }
   .about-x { padding:10px;margin:-10px; }
@@ -843,10 +850,9 @@ tr:hover td { background:rgba(121,192,255,.05); }
   .g3 { grid-template-columns:1fr; }
   .flow-row { gap:4px; }
 }
-/* Phones in landscape (wide but short) can exceed 700px width — catch them by height instead */
-@media (orientation:landscape) and (max-height:500px) {
-  .tb-controls { display:none; }
-}
+/* Phones in landscape (wide but short) can exceed 700px width — catch them by height instead.
+   NOTE: we intentionally do NOT hide .tb-controls here anymore (theme/shortcuts must
+   stay reachable on all screen sizes) — see fix notes at bottom of <script>. */
 </style>
 </head>
 <body>
@@ -883,7 +889,7 @@ tr:hover td { background:rgba(121,192,255,.05); }
 <!-- WORKSPACE -->
 <div class="workspace">
   <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar no-anim" id="sidebar">
     <div class="sb-top">
       <div class="sb-title">C++ File Handling</div>
       <div class="sb-sub">Complete Reference Guide</div>
@@ -1546,10 +1552,16 @@ function renderContent(idx) {
   const next = idx < pages.length - 1
     ? `<button class="pg-nav-btn" onclick="goTo(${idx+1})">${pages[idx+1].label} →</button>`
     : `<button class="pg-nav-btn" disabled>Next →</button>`;
- const totalChapters = pages.length - 2; // home + cheat sheet exclude
-const info = p.id === 'cheat'
-  ? `<div class="pg-nav-info">Quick Reference</div>`
-  : `<div class="pg-nav-info">Chapter ${idx} of ${totalChapters}</div>`;
+  /* FIX #1: Cheat Sheet is not a numbered chapter (pages.length includes
+     Home + 13 chapters + Cheat Sheet = 15 items). Previously this line
+     always computed "Chapter ${idx} of ${pages.length - 2}", which produced
+     the nonsensical "Chapter 14 of 13" on the Cheat Sheet page because idx
+     there is 14 but the chapter total (pages.length - 2) is 13.
+     Now the Cheat Sheet gets its own label instead of a chapter count. */
+  const totalChapters = pages.length - 2; // exclude Home + Cheat Sheet
+  const info = p.id === 'cheat'
+    ? `<div class="pg-nav-info">Quick Reference</div>`
+    : `<div class="pg-nav-info">Chapter ${idx} of ${totalChapters}</div>`;
   return body + `<div class="pg-nav">${prev}${info}${next}</div>`;
 }
 
@@ -1612,6 +1624,7 @@ const searchIndex = pages.slice(1).map((p, i) => ({
 
 let searchTimer;
 let activeResultIdx = 0;
+let lastHitsCount = 0; // FIX #4 helper: remember how many matches actually exist
 function onSearch(q) {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => _doSearch(q), 60);
@@ -1637,12 +1650,20 @@ function _doSearch(q) {
     .sort((a, b) => b.score - a.score)
     .map(x => x.s);
 
+  const totalMatches = scored.length; // FIX #4: true match count before slicing
   const hits = scored.slice(0, 8);
 
   if (!hits.length) {
     res.innerHTML = `<div class="sr-empty">No results for "<strong>${escHtml(q)}</strong>" — try keywords like <em>seekg</em>, <em>binary</em>, <em>append</em></div>`;
   } else {
-    res.innerHTML = `<div class="sr-header">${hits.length} result${hits.length>1?'s':''} found</div>` + hits.map((h, i) => {
+    /* FIX #4: header now reflects the *actual* number of matches found
+       (totalMatches), and separately notes when the list was truncated to
+       the first 8 shown, instead of always reporting hits.length (<=8)
+       as if that were the complete result count. */
+    const headerText = totalMatches > hits.length
+      ? `${totalMatches} results found — showing top ${hits.length}`
+      : `${totalMatches} result${totalMatches > 1 ? 's' : ''} found`;
+    res.innerHTML = `<div class="sr-header">${headerText}</div>` + hits.map((h, i) => {
       const hl = highlightWords(escHtml(h.label), words);
       const snippet = getSnippet(h.keywords, words);
       return `<div class="sr-item${i===0?' active':''}" onclick="goTo(${h.idx});hideResults()">
@@ -1820,6 +1841,20 @@ function toggleTheme() {
 })();
 
 buildSidebar();
+/* FIX #3: Avoid the sidebar "open then snap closed" flicker on mobile load.
+   The sidebar previously always rendered without the 'closed' class and
+   relied on goTo(0) -> the width<700 check to close it, causing a visible
+   CSS transition on first paint. We now decide the initial state up front,
+   apply it with transitions disabled (.no-anim), then re-enable transitions
+   on the next frame so later toggles still animate normally. */
+if (window.innerWidth < 700) {
+  sbOpen = false;
+  document.getElementById('sidebar').classList.add('closed');
+  document.getElementById('sbToggle').classList.remove('active');
+}
+requestAnimationFrame(() => {
+  document.getElementById('sidebar').classList.remove('no-anim');
+});
 // Always start from home page (chapter 0) on every visit/refresh
 goTo(0);
 </script>
