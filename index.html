@@ -1546,7 +1546,10 @@ function renderContent(idx) {
   const next = idx < pages.length - 1
     ? `<button class="pg-nav-btn" onclick="goTo(${idx+1})">${pages[idx+1].label} →</button>`
     : `<button class="pg-nav-btn" disabled>Next →</button>`;
-  const info = `<div class="pg-nav-info">Chapter ${idx} of ${pages.length - 2}</div>`;
+ const totalChapters = pages.length - 2; // home + cheat sheet exclude
+const info = p.id === 'cheat'
+  ? `<div class="pg-nav-info">Quick Reference</div>`
+  : `<div class="pg-nav-info">Chapter ${idx} of ${totalChapters}</div>`;
   return body + `<div class="pg-nav">${prev}${info}${next}</div>`;
 }
 
